@@ -18,6 +18,7 @@ import {
   Sparkles,
   Cloud,
   FileText,
+  RotateCcw,
 } from 'lucide-react';
 import { EBook } from '../../types/database';
 import { parseCloudEmbedUrl } from '../../lib/embedHelper';
@@ -29,7 +30,7 @@ export interface EbookReaderModalProps {
 }
 
 type ReaderTheme = 'light' | 'sepia' | 'dark';
-type ViewMode = 'epub' | 'cloud' | 'fallback';
+type ViewMode = 'epub' | 'cloud';
 
 export const EbookReaderModal: React.FC<EbookReaderModalProps> = ({
   isOpen,
@@ -43,7 +44,9 @@ export const EbookReaderModal: React.FC<EbookReaderModalProps> = ({
   const [tocItems, setTocItems] = useState<any[]>([]);
   const [currentLocation, setCurrentLocation] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
+  const [loadingStatus, setLoadingStatus] = useState('Mengunduh struktur buku...');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
 
   // Active view mode: 'epub' (interactive epubjs) or 'cloud' (OneDrive/PDF iframe)
   const [viewMode, setViewMode] = useState<ViewMode>('epub');
@@ -64,7 +67,6 @@ export const EbookReaderModal: React.FC<EbookReaderModalProps> = ({
   useEffect(() => {
     if (!isOpen || !ebook) return;
 
-    // If it's onedrive or pdf, or if file_url is not an epub binary, default to cloud view
     if (!hasEpubFormat || ebook.format_file === 'onedrive' || ebook.format_file === 'pdf') {
       setViewMode('cloud');
       setIsLoading(false);
@@ -81,19 +83,26 @@ export const EbookReaderModal: React.FC<EbookReaderModalProps> = ({
     let isMounted = true;
     let abortController = new AbortController();
     setIsLoading(true);
+    setLoadingStatus('Mengunduh file buku digital...');
     setErrorMsg(null);
 
-    // Timeout safety: if not rendered within 5 seconds, provide fallback option
+    // Realistic timeout: 25 seconds for large EPUBs
     const timer = setTimeout(() => {
       if (isMounted && isLoading) {
         setIsLoading(false);
-        setErrorMsg('Memuat file EPUB memerlukan waktu lebih lama dari biasanya (koneksi eksternal / batas CORS). Anda dapat beralih ke Mode OneDrive Cloud.');
+        setErrorMsg(
+          'Waktu memuat file EPUB habis (file berukuran besar atau URL belum dapat diakses). Anda dapat mencoba muat ulang atau membuka via Cloud Viewer.'
+        );
       }
-    }, 5000);
+    }, 25000);
 
     const initEpub = async () => {
       try {
-        const epubUrl = ebook.file_url || ebook.onedrive_embed_url || '';
+        const epubUrl = (ebook.file_url || ebook.onedrive_embed_url || '').trim();
+
+        if (!epubUrl) {
+          throw new Error('Tautan file EPUB belum diisi.');
+        }
 
         // If URL points to OneDrive or Google Drive, switch directly to cloud mode
         if (
@@ -109,17 +118,26 @@ export const EbookReaderModal: React.FC<EbookReaderModalProps> = ({
           return;
         }
 
-        // Fetch ArrayBuffer first to avoid silent hung requests and capture CORS issues cleanly
-        const response = await fetch(epubUrl, {
-          signal: abortController.signal,
-          mode: 'cors',
-        });
+        // Try fetching ArrayBuffer first
+        setLoadingStatus('Mengunduh paket e-book dari Cloudflare R2 / Server...');
+        let buffer: ArrayBuffer | null = null;
 
-        if (!response.ok) {
-          throw new Error(`HTTP Error ${response.status}: Gagal mengunduh file EPUB.`);
+        try {
+          const response = await fetch(epubUrl, {
+            signal: abortController.signal,
+            mode: 'cors',
+          });
+
+          if (!response.ok) {
+            throw new Error(`Server merespons status ${response.status}: File tidak ditemukan di R2.`);
+          }
+
+          buffer = await response.arrayBuffer();
+        } catch (fetchErr: any) {
+          if (fetchErr.name === 'AbortError') return;
+          console.warn('Fetch ArrayBuffer failed, attempting direct ePub URL instantiation:', fetchErr);
         }
 
-        const buffer = await response.arrayBuffer();
         if (!isMounted || !viewerRef.current) return;
 
         // Clean up previous book instance if any
@@ -129,7 +147,10 @@ export const EbookReaderModal: React.FC<EbookReaderModalProps> = ({
           } catch {}
         }
 
-        const book = ePub(buffer);
+        setLoadingStatus('Membongkar bab dan merender tata letak buku...');
+
+        // Instantiate ePub from buffer or directly from URL
+        const book = buffer ? ePub(buffer) : ePub(epubUrl);
         bookRef.current = book;
 
         await book.ready;
@@ -156,7 +177,7 @@ export const EbookReaderModal: React.FC<EbookReaderModalProps> = ({
         });
         rendition.themes.select(theme);
 
-        // Display first section
+        // Display first chapter
         await rendition.display();
 
         // Load TOC
@@ -178,11 +199,12 @@ export const EbookReaderModal: React.FC<EbookReaderModalProps> = ({
         }
       } catch (err: any) {
         if (err.name === 'AbortError') return;
-        console.warn('EPUB direct reader fallback triggered:', err);
+        console.error('EPUB reader error:', err);
         if (isMounted) {
           setIsLoading(false);
+          clearTimeout(timer);
           setErrorMsg(
-            'Format EPUB dari sumber eksternal dibatasi oleh kebijakan keamanan browser (CORS). Anda dapat melihatnya melalui Mode Cloud Embed atau mengunduh filenya.'
+            'Gagal merender file EPUB. Pastikan aturan CORS di Cloudflare R2 sudah di-save dan nama file di URL sesuai persis dengan nama file di R2.'
           );
         }
       }
@@ -200,7 +222,7 @@ export const EbookReaderModal: React.FC<EbookReaderModalProps> = ({
         } catch {}
       }
     };
-  }, [isOpen, ebook, viewMode]);
+  }, [isOpen, ebook, viewMode, retryCount]);
 
   // Apply theme & font changes to rendition
   useEffect(() => {
@@ -293,7 +315,7 @@ export const EbookReaderModal: React.FC<EbookReaderModalProps> = ({
               }`}
             >
               <FileText className="w-3.5 h-3.5" />
-              <span className="hidden md:inline">Mode Teks (EPUB)</span>
+              <span className="hidden md:inline">Mode EPUB (E-Reader)</span>
               <span className="md:hidden">EPUB</span>
             </button>
 
@@ -311,7 +333,7 @@ export const EbookReaderModal: React.FC<EbookReaderModalProps> = ({
             >
               <Cloud className="w-3.5 h-3.5" />
               <span className="hidden md:inline">Mode Cloud (OneDrive / PDF)</span>
-              <span className="md:hidden">OneDrive / PDF</span>
+              <span className="md:hidden">Cloud</span>
             </button>
           </div>
 
@@ -460,50 +482,60 @@ export const EbookReaderModal: React.FC<EbookReaderModalProps> = ({
               <>
                 {isLoading && (
                   <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-inherit space-y-3 p-6 text-center">
-                    <RefreshCw className="w-8 h-8 animate-spin text-brand-500" />
+                    <RefreshCw className="w-9 h-9 animate-spin text-brand-500" />
                     <div className="space-y-1">
                       <p className="text-sm font-bold text-slate-800 dark:text-slate-200">
                         Menyiapkan Buku Digital...
                       </p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">
-                        Mengunduh struktur bab dan mengaktifkan engine pembaca.
+                      <p className="text-xs text-slate-500 dark:text-slate-400 animate-pulse">
+                        {loadingStatus}
                       </p>
                     </div>
                   </div>
                 )}
 
                 {errorMsg ? (
-                  <div className="p-8 max-w-lg text-center space-y-5">
+                  <div className="p-8 max-w-md text-center space-y-4 rounded-2xl bg-white dark:bg-slate-900 shadow-xl border border-slate-200 dark:border-slate-800 m-4">
                     <div className="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-500 flex items-center justify-center mx-auto">
                       <AlertCircle className="w-6 h-6" />
                     </div>
                     <div className="space-y-2">
-                      <h4 className="font-bold text-slate-900 dark:text-white">
-                        Pemberitahuan Pembaca Digital
+                      <h4 className="font-bold text-sm sm:text-base text-slate-900 dark:text-white">
+                        Pemberitahuan Pembaca EPUB
                       </h4>
                       <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
                         {errorMsg}
                       </p>
                     </div>
 
-                    <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
+                    <div className="flex flex-col sm:flex-row items-center justify-center gap-2 pt-2">
+                      <button
+                        type="button"
+                        onClick={() => setRetryCount((c) => c + 1)}
+                        className="w-full sm:w-auto px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs font-bold inline-flex items-center justify-center gap-1.5 transition-all"
+                      >
+                        <RotateCcw className="w-3.5 h-3.5" />
+                        Coba Muat Ulang
+                      </button>
+
                       <button
                         type="button"
                         onClick={() => setViewMode('cloud')}
-                        className="px-4 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-bold inline-flex items-center gap-1.5 shadow-md transition-all hover:scale-105"
+                        className="w-full sm:w-auto px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-bold inline-flex items-center justify-center gap-1.5 shadow-md transition-all"
                       >
-                        <Cloud className="w-4 h-4" />
-                        Buka di Mode Cloud Embed (OneDrive / PDF)
+                        <Cloud className="w-3.5 h-3.5" />
+                        Buka Mode Cloud
                       </button>
 
-                      {ebook.onedrive_embed_url && (
+                      {ebook.file_url && (
                         <a
-                          href={ebook.onedrive_embed_url}
+                          href={ebook.file_url}
                           target="_blank"
                           rel="noreferrer"
-                          className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold inline-flex items-center gap-1.5 transition-all"
+                          className="w-full sm:w-auto px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold inline-flex items-center justify-center gap-1.5 shadow-md transition-all"
                         >
-                          Buka di Tab Baru <ExternalLink className="w-3.5 h-3.5" />
+                          <Download className="w-3.5 h-3.5" />
+                          Unduh File
                         </a>
                       )}
                     </div>
@@ -568,14 +600,14 @@ export const EbookReaderModal: React.FC<EbookReaderModalProps> = ({
           </div>
 
           <div className="flex items-center gap-2">
-            {ebook.onedrive_embed_url && (
+            {ebook.file_url && (
               <a
-                href={ebook.onedrive_embed_url}
+                href={ebook.file_url}
                 target="_blank"
                 rel="noreferrer"
                 className="hover:text-brand-500 inline-flex items-center gap-1 font-semibold"
               >
-                <span>Buka di OneDrive</span>
+                <span>Buka URL Langsung</span>
                 <ExternalLink className="w-3 h-3" />
               </a>
             )}
