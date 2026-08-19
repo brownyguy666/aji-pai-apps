@@ -147,7 +147,12 @@ export const HeroSection: React.FC = () => {
                   <div className="flex flex-wrap justify-center gap-1.5">
                     <a href="#sertifikasi">
                       <Badge variant="blue" size="sm" className="hover:opacity-80 transition-opacity">
-                        Google Certified Educator
+                        Google Certified Educator L1
+                      </Badge>
+                    </a>
+                    <a href="#sertifikasi">
+                      <Badge variant="purple" size="sm" className="hover:opacity-80 transition-opacity">
+                        Gemini Certified Educator
                       </Badge>
                     </a>
                     <Badge variant="brand" size="sm">Fikih & Ushul Fikih</Badge>
