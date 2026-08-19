@@ -13,6 +13,10 @@ import {
   Calendar,
   Cloud,
   CheckCircle,
+  UploadCloud,
+  FileUp,
+  Image as ImageIcon,
+  Loader2,
 } from 'lucide-react';
 import { useEbook } from '../hooks/useEbook';
 import { EBook, EBookFormat } from '../types/database';
@@ -23,6 +27,7 @@ import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
 import { Input } from '../components/ui/Input';
 import { useToast } from '../components/ui/Toast';
+import { uploadEbookFile, uploadImage } from '../lib/supabase';
 
 export const EbookManager: React.FC = () => {
   const { ebookList, createEbook, updateEbook, deleteEbook, seedEbooks, isSeeding, isLoading } = useEbook();
@@ -32,6 +37,10 @@ export const EbookManager: React.FC = () => {
   const [editingItem, setEditingItem] = useState<EBook | null>(null);
   const [previewEbook, setPreviewEbook] = useState<EBook | null>(null);
 
+  // Upload progress states
+  const [uploadingFile, setUploadingFile] = useState(false);
+  const [uploadingCover, setUploadingCover] = useState(false);
+
   // Form states
   const [judul, setJudul] = useState('');
   const [penulis, setPenulis] = useState('');
@@ -39,7 +48,7 @@ export const EbookManager: React.FC = () => {
   const [kategori, setKategori] = useState('Fikih Syafi\'i');
   const [deskripsi, setDeskripsi] = useState('');
   const [coverUrl, setCoverUrl] = useState('');
-  const [formatFile, setFormatFile] = useState<EBookFormat>('epub');
+  const [formatFile, setFormatFile] = useState<EBookFormat>('onedrive');
   const [fileUrl, setFileUrl] = useState('');
   const [onedriveUrl, setOnedriveUrl] = useState('');
   const [tahunTerbit, setTahunTerbit] = useState('2024');
@@ -57,7 +66,7 @@ export const EbookManager: React.FC = () => {
     setKategori('Fikih Syafi\'i');
     setDeskripsi('');
     setCoverUrl('https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=600&q=80');
-    setFormatFile('epub');
+    setFormatFile('onedrive');
     setFileUrl('');
     setOnedriveUrl('');
     setTahunTerbit(new Date().getFullYear().toString());
@@ -87,6 +96,48 @@ export const EbookManager: React.FC = () => {
     setIsDownloadable(item.is_downloadable ?? true);
     setUrutan(item.urutan || 1);
     setModalOpen(true);
+  };
+
+  // Upload book file (EPUB, PDF, MOBI, AZW3)
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingFile(true);
+    try {
+      const res = await uploadEbookFile(file);
+      setFileUrl(res.url);
+
+      // Auto-detect format from extension
+      const ext = file.name.split('.').pop()?.toLowerCase();
+      if (ext === 'epub') setFormatFile('epub');
+      else if (ext === 'pdf') setFormatFile('pdf');
+      else if (ext === 'mobi') setFormatFile('mobi');
+      else if (ext === 'azw3') setFormatFile('azw3');
+
+      success(`File ${file.name} berhasil diunggah ke Supabase Storage!`);
+    } catch (err: any) {
+      toastError(`Gagal mengunggah file: ${err.message || 'Error koneksi storage'}`);
+    } finally {
+      setUploadingFile(false);
+    }
+  };
+
+  // Upload cover image
+  const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingCover(true);
+    try {
+      const url = await uploadImage(file, 'ebook-covers');
+      setCoverUrl(url);
+      success('Gambar cover berhasil diunggah!');
+    } catch (err: any) {
+      toastError('Gagal mengunggah cover.');
+    } finally {
+      setUploadingCover(false);
+    }
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -134,19 +185,19 @@ export const EbookManager: React.FC = () => {
           is_downloadable: isDownloadable,
           urutan: Number(urutan),
         });
-        success('E-book baru berhasil ditambahkan!');
+        success('E-Book baru berhasil ditambahkan!');
       }
       setModalOpen(false);
-    } catch {
-      toastError('Gagal menyimpan data e-book.');
+    } catch (err) {
+      toastError('Terjadi kesalahan saat menyimpan e-book.');
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm('Yakin ingin menghapus e-book ini?')) return;
+    if (!confirm('Apakah Anda yakin ingin menghapus e-book ini?')) return;
     try {
       await deleteEbook(id);
-      success('E-book berhasil dihapus.');
+      success('E-Book berhasil dihapus!');
     } catch {
       toastError('Gagal menghapus e-book.');
     }
@@ -175,7 +226,7 @@ export const EbookManager: React.FC = () => {
             </h1>
           </div>
           <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-            Kelola buku digital, modul ajar, dan kitab turats dengan dukungan pembaca <strong>EPUB, PDF, MOBI, AZW3, & OneDrive</strong>.
+            Kelola buku digital, modul ajar, dan kitab turats dengan opsi <strong>Google Drive, OneDrive, Upload EPUB/PDF, MOBI, & AZW3</strong>.
           </p>
         </div>
 
@@ -325,18 +376,18 @@ export const EbookManager: React.FC = () => {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="space-y-1.5">
               <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
-                Format File
+                Format Pembaca Utama
               </label>
               <select
                 value={formatFile}
                 onChange={(e) => setFormatFile(e.target.value as any)}
                 className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3.5 py-2 text-sm font-semibold"
               >
-                <option value="epub">EPUB (E-Reader Interaktif)</option>
+                <option value="onedrive">Google Drive / OneDrive Cloud Embed (Sangat Direkomendasikan)</option>
                 <option value="pdf">PDF (Dokumen Standar)</option>
+                <option value="epub">EPUB (E-Reader Interaktif)</option>
                 <option value="mobi">MOBI (Amazon Kindle)</option>
                 <option value="azw3">AZW3 (Kindle KF8)</option>
-                <option value="onedrive">OneDrive Cloud Embed</option>
               </select>
             </div>
 
@@ -370,36 +421,110 @@ export const EbookManager: React.FC = () => {
             </div>
           </div>
 
-          {/* OneDrive Embed Link Field */}
-          <div className="p-4 rounded-2xl bg-blue-50/50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 space-y-3">
+          {/* Cloud Embed Link (Google Drive / OneDrive) Box */}
+          <div className="p-4 rounded-2xl bg-blue-50/60 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 space-y-3">
             <div className="flex items-center gap-2 text-blue-700 dark:text-blue-300 font-bold text-xs">
               <Cloud className="w-4 h-4" />
-              <span>Integrasi Microsoft OneDrive / Cloud Embed (Direkomendasikan)</span>
+              <span>Opsi 1: Tautan Google Drive / OneDrive Embed (100% Cepat & Bebas Error)</span>
             </div>
             <p className="text-[11px] text-slate-500 dark:text-slate-400">
-              Salin tautan "Embed" atau tautan berbagi dari Microsoft OneDrive Anda. Sistem otomatis memformatnya agar langsung dapat dibaca pengunjung.
+              Cukup tempel link share Google Drive biasa (misal: <code>https://drive.google.com/file/d/.../view</code>) atau link Microsoft OneDrive. Sistem otomatis mengonversinya menjadi dokumen interaktif.
             </p>
             <Input
-              label="Tautan Embed / Share OneDrive"
+              label="Tautan Share Google Drive / OneDrive Embed"
               value={onedriveUrl}
               onChange={(e) => setOnedriveUrl(e.target.value)}
-              placeholder="https://onedrive.live.com/embed?resid=... atau https://1drv.ms/..."
+              placeholder="https://drive.google.com/file/d/.../view atau https://onedrive.live.com/embed?resid=..."
             />
           </div>
 
-          <Input
-            label="Tautan File Direct / Download URL (File EPUB / PDF / MOBI)"
-            value={fileUrl}
-            onChange={(e) => setFileUrl(e.target.value)}
-            placeholder="https://... / link Google Drive / Supabase Storage"
-          />
+          {/* Direct File Upload & URL Box */}
+          <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 font-bold text-xs text-slate-800 dark:text-slate-200">
+                <FileUp className="w-4 h-4 text-purple-500" />
+                <span>Opsi 2: Upload File E-Book Langsung (EPUB / PDF / MOBI ke Supabase Storage)</span>
+              </div>
+              {uploadingFile && (
+                <span className="flex items-center gap-1 text-[11px] text-purple-600 font-semibold animate-pulse">
+                  <Loader2 className="w-3 h-3 animate-spin" /> Mengunggah file...
+                </span>
+              )}
+            </div>
 
-          <Input
-            label="URL Gambar Sampul / Cover (JPG/PNG/WebP)"
-            value={coverUrl}
-            onChange={(e) => setCoverUrl(e.target.value)}
-            placeholder="https://images.unsplash.com/..."
-          />
+            <div className="flex items-center gap-2">
+              <input
+                type="file"
+                id="ebook-file-input"
+                accept=".epub,.pdf,.mobi,.azw3"
+                onChange={handleFileUpload}
+                className="hidden"
+              />
+              <label
+                htmlFor="ebook-file-input"
+                className="px-3.5 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold cursor-pointer inline-flex items-center gap-1.5 transition-colors"
+              >
+                <UploadCloud className="w-4 h-4" />
+                Pilih File Dokumen (.epub, .pdf, .mobi)
+              </label>
+              {fileUrl && (
+                <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-mono truncate max-w-xs flex items-center gap-1">
+                  <CheckCircle className="w-3.5 h-3.5 shrink-0" /> Terunggah
+                </span>
+              )}
+            </div>
+
+            <Input
+              label="Atau Masukkan Tautan Direct File URL"
+              value={fileUrl}
+              onChange={(e) => setFileUrl(e.target.value)}
+              placeholder="https://... (URL file publik)"
+            />
+          </div>
+
+          {/* Cover Image Upload & URL */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
+                Gambar Sampul / Cover
+              </label>
+              {uploadingCover && (
+                <span className="flex items-center gap-1 text-[11px] text-brand-600 font-semibold animate-pulse">
+                  <Loader2 className="w-3 h-3 animate-spin" /> Mengunggah cover...
+                </span>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2">
+              <input
+                type="file"
+                id="cover-file-input"
+                accept="image/*"
+                onChange={handleCoverUpload}
+                className="hidden"
+              />
+              <label
+                htmlFor="cover-file-input"
+                className="px-3.5 py-2 rounded-xl bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold cursor-pointer inline-flex items-center gap-1.5 transition-colors"
+              >
+                <ImageIcon className="w-4 h-4" />
+                Upload Cover dari Komputer
+              </label>
+              {coverUrl && (
+                <img
+                  src={coverUrl}
+                  alt="Preview"
+                  className="w-8 h-10 object-cover rounded border"
+                />
+              )}
+            </div>
+
+            <Input
+              value={coverUrl}
+              onChange={(e) => setCoverUrl(e.target.value)}
+              placeholder="https://images.unsplash.com/..."
+            />
+          </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
             <Input
@@ -454,22 +579,22 @@ export const EbookManager: React.FC = () => {
                 onChange={(e) => setIsDownloadable(e.target.checked)}
                 className="w-4 h-4 rounded text-brand-600 focus:ring-brand-500"
               />
-              <span>Izinkan Unduh File</span>
+              <span>Izinkan Pengunjung Mengunduh File</span>
             </label>
           </div>
 
-          <div className="flex justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
-            <Button type="button" variant="ghost" onClick={() => setModalOpen(false)}>
+          <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
+            <Button type="button" variant="outline" onClick={() => setModalOpen(false)}>
               Batal
             </Button>
             <Button type="submit" variant="primary">
-              Simpan E-Book
+              {editingItem ? 'Simpan Perubahan' : 'Terbitkan E-Book'}
             </Button>
           </div>
         </form>
       </Modal>
 
-      {/* Reader Modal Preview */}
+      {/* Live Preview Modal */}
       {previewEbook && (
         <EbookReaderModal
           isOpen={Boolean(previewEbook)}

@@ -61,7 +61,6 @@ export async function uploadMateriFile(file: File): Promise<{ url: string; size:
     };
   }
 
-  const fileExt = file.name.split('.').pop();
   const cleanName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
   const fileName = `${Date.now()}_${cleanName}`;
 
@@ -74,6 +73,60 @@ export async function uploadMateriFile(file: File): Promise<{ url: string; size:
 
   if (error) {
     throw error;
+  }
+
+  const { data: publicUrlData } = supabase.storage
+    .from('materi-files')
+    .getPublicUrl(fileName);
+
+  return {
+    url: publicUrlData.publicUrl,
+    size: file.size,
+    name: file.name,
+  };
+}
+
+/**
+ * Upload an E-Book or document file (EPUB, PDF, MOBI, AZW3) to Supabase Storage
+ */
+export async function uploadEbookFile(file: File): Promise<{ url: string; size: number; name: string }> {
+  if (!isSupabaseConfigured) {
+    return {
+      url: URL.createObjectURL(file),
+      size: file.size,
+      name: file.name,
+    };
+  }
+
+  const cleanName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+  const fileName = `ebooks/${Date.now()}_${cleanName}`;
+
+  // Try bucket 'materi-files' or fallback to 'images'
+  const { error } = await supabase.storage
+    .from('materi-files')
+    .upload(fileName, file, {
+      cacheControl: '3600',
+      upsert: true,
+    });
+
+  if (error) {
+    const fallbackRes = await supabase.storage
+      .from('images')
+      .upload(fileName, file, {
+        cacheControl: '3600',
+        upsert: true,
+      });
+
+    if (fallbackRes.error) {
+      throw fallbackRes.error;
+    }
+
+    const { data } = supabase.storage.from('images').getPublicUrl(fileName);
+    return {
+      url: data.publicUrl,
+      size: file.size,
+      name: file.name,
+    };
   }
 
   const { data: publicUrlData } = supabase.storage
