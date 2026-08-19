@@ -110,6 +110,8 @@ export interface Sertifikasi {
   nomor_sertifikat: string | null;
   link_verifikasi: string | null;
   badge_url: string | null;
+  certificate_url?: string | null;
+  accredible_id?: string | null;
   tahun: number;
   kategori: string; // e.g. "Google for Education", "Kementerian Agama", "Pendidik Profesional"
   urutan: number;

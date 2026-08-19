@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
-import { Plus, Edit, Trash2, Award, ExternalLink, ShieldCheck, Sparkles, CheckCircle2 } from 'lucide-react';
+import { Plus, Edit, Trash2, Award, ExternalLink, ShieldCheck, Sparkles, CheckCircle2, FileCheck } from 'lucide-react';
 import { useSertifikasi } from '../hooks/useSertifikasi';
 import { Sertifikasi } from '../types/database';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
-import { Select } from '../components/ui/Select';
 import { Badge } from '../components/ui/Badge';
 import { Modal } from '../components/ui/Modal';
 import { useToast } from '../components/ui/Toast';
@@ -22,8 +21,10 @@ export const SertifikasiManager: React.FC = () => {
     judul: '',
     penerbit: 'Google for Education',
     nomor_sertifikat: '',
-    link_verifikasi: 'https://educertifications.google/',
+    link_verifikasi: '',
     badge_url: '',
+    certificate_url: '',
+    accredible_id: '',
     tahun: new Date().getFullYear(),
     kategori: 'Google for Education',
     urutan: 1,
@@ -36,8 +37,10 @@ export const SertifikasiManager: React.FC = () => {
       judul: '',
       penerbit: 'Google for Education',
       nomor_sertifikat: '',
-      link_verifikasi: 'https://educertifications.google/',
+      link_verifikasi: '',
       badge_url: '',
+      certificate_url: '',
+      accredible_id: '',
       tahun: new Date().getFullYear(),
       kategori: 'Google for Education',
       urutan: sertifikasiList.length + 1,
@@ -54,6 +57,8 @@ export const SertifikasiManager: React.FC = () => {
       nomor_sertifikat: item.nomor_sertifikat || '',
       link_verifikasi: item.link_verifikasi || '',
       badge_url: item.badge_url || '',
+      certificate_url: item.certificate_url || '',
+      accredible_id: item.accredible_id || '',
       tahun: item.tahun,
       kategori: item.kategori,
       urutan: item.urutan,
@@ -62,38 +67,45 @@ export const SertifikasiManager: React.FC = () => {
     setModalOpen(true);
   };
 
-  const handleApplyPreset = (preset: 'gce1' | 'gce2' | 'trainer' | 'guru_pai') => {
+  const handleApplyPreset = (preset: 'gce1' | 'gemini_edu' | 'gemini_fac') => {
     if (preset === 'gce1') {
       setFormData({
         ...formData,
-        judul: 'Google Certified Educator Level 1',
+        judul: 'Pendidik Tersertifikasi Google Level 1 (Google Certified Educator)',
         penerbit: 'Google for Education',
-        link_verifikasi: 'https://educertifications.google/',
+        nomor_sertifikat: '190209183',
+        link_verifikasi: 'https://edu.google.accredible.com/3b93bf05-d429-4551-a346-cb902662dde2#acc.3W0LKH4w',
+        badge_url: 'https://api.accredible.com/v1/frontend/credential_website_embed_image/badge/190209183',
+        certificate_url: 'https://api.accredible.com/v1/frontend/credential_website_embed_image/certificate/190209183',
+        accredible_id: '190209183',
         kategori: 'Google for Education',
+        tahun: 2024,
       });
-    } else if (preset === 'gce2') {
+    } else if (preset === 'gemini_edu') {
       setFormData({
         ...formData,
-        judul: 'Google Certified Educator Level 2',
+        judul: 'Gemini Certified Educator',
         penerbit: 'Google for Education',
-        link_verifikasi: 'https://educertifications.google/',
-        kategori: 'Google for Education',
+        nomor_sertifikat: '191245638',
+        link_verifikasi: 'https://edu.google.accredible.com/3c820304-65ab-43ac-90cb-2454a07e4d60#acc.v8rpD23n',
+        badge_url: 'https://api.accredible.com/v1/frontend/credential_website_embed_image/badge/191245638',
+        certificate_url: 'https://api.accredible.com/v1/frontend/credential_website_embed_image/certificate/191245638',
+        accredible_id: '191245638',
+        kategori: 'Google AI in Education',
+        tahun: 2024,
       });
-    } else if (preset === 'trainer') {
+    } else if (preset === 'gemini_fac') {
       setFormData({
         ...formData,
-        judul: 'Google Certified Trainer',
+        judul: 'Gemini Certified Faculty',
         penerbit: 'Google for Education',
-        link_verifikasi: 'https://educertifications.google/',
-        kategori: 'Google for Education',
-      });
-    } else if (preset === 'guru_pai') {
-      setFormData({
-        ...formData,
-        judul: 'Sertifikat Pendidik Profesional (Gr.) Bidang PAI',
-        penerbit: 'Kementerian Agama RI & Kemendikbudristek',
-        link_verifikasi: 'https://simpatika.kemenag.go.id',
-        kategori: 'Pendidikan Profesi Guru',
+        nomor_sertifikat: '164938512',
+        link_verifikasi: 'https://edu.google.accredible.com/e92fc936-6ead-4f74-886a-b15544a63db2#acc.eRFcEt2i',
+        badge_url: 'https://api.accredible.com/v1/frontend/credential_website_embed_image/badge/164938512',
+        certificate_url: 'https://api.accredible.com/v1/frontend/credential_website_embed_image/certificate/164938512',
+        accredible_id: '164938512',
+        kategori: 'Google AI in Education',
+        tahun: 2024,
       });
     }
   };
@@ -143,11 +155,11 @@ export const SertifikasiManager: React.FC = () => {
               <ShieldCheck className="w-5 h-5" />
             </div>
             <h1 className="text-2xl font-extrabold font-display text-slate-900 dark:text-white">
-              Manajemen Sertifikasi & Kredensial Guru
+              Manajemen Sertifikasi Google & Kredensial
             </h1>
           </div>
           <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Kelola sertifikasi resmi (Google Certified Educator, Kemdikbud, Kemenag) untuk ditampilkan di landing page.
+            Kelola sertifikasi resmi Google Accredible Anda untuk ditampilkan dengan preview interaktif di beranda.
           </p>
         </div>
 
@@ -165,34 +177,39 @@ export const SertifikasiManager: React.FC = () => {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {sertifikasiList.map((item) => (
-            <Card key={item.id} className="p-5 flex flex-col justify-between space-y-4 bg-white dark:bg-slate-900">
+            <Card key={item.id} className="p-5 flex flex-col justify-between space-y-4 bg-white dark:bg-slate-900 overflow-hidden">
               <div className="space-y-3">
                 <div className="flex items-center justify-between gap-2">
-                  <Badge variant={item.penerbit.toLowerCase().includes('google') ? 'blue' : 'brand'}>
+                  <Badge variant={item.judul.toLowerCase().includes('gemini') ? 'purple' : 'blue'}>
                     {item.kategori}
                   </Badge>
                   <span className="text-xs text-slate-400 font-medium">Tahun {item.tahun}</span>
                 </div>
 
-                <div className="flex items-start gap-3">
-                  <div className="p-2.5 rounded-xl bg-blue-50 dark:bg-blue-950/50 text-blue-600 shrink-0">
-                    <Award className="w-6 h-6" />
+                {/* Certificate Preview Image */}
+                {item.certificate_url && (
+                  <div className="aspect-[16/10] rounded-xl overflow-hidden bg-slate-950/5 border border-slate-200 dark:border-slate-800">
+                    <img
+                      src={item.certificate_url}
+                      alt={item.judul}
+                      className="w-full h-full object-contain p-1"
+                    />
                   </div>
-                  <div>
-                    <h3 className="font-display font-bold text-base text-slate-900 dark:text-white leading-snug">
-                      {item.judul}
-                    </h3>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                      {item.penerbit}
-                    </p>
-                  </div>
-                </div>
-
-                {item.nomor_sertifikat && (
-                  <p className="text-xs text-slate-400 font-mono">
-                    ID: {item.nomor_sertifikat}
-                  </p>
                 )}
+
+                <div className="space-y-1">
+                  <h3 className="font-display font-bold text-base text-slate-900 dark:text-white leading-snug">
+                    {item.judul}
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    {item.penerbit}
+                  </p>
+                  {item.nomor_sertifikat && (
+                    <p className="text-xs text-slate-400 font-mono">
+                      ID: {item.nomor_sertifikat}
+                    </p>
+                  )}
+                </div>
               </div>
 
               <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
@@ -203,7 +220,7 @@ export const SertifikasiManager: React.FC = () => {
                     rel="noreferrer"
                     className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 hover:underline"
                   >
-                    <span>Cek Verifikasi</span>
+                    <span>Cek Accredible</span>
                     <ExternalLink className="w-3 h-3" />
                   </a>
                 ) : (
@@ -241,7 +258,7 @@ export const SertifikasiManager: React.FC = () => {
           {/* Quick Preset Buttons */}
           <div className="space-y-1.5 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
             <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-              Template Cepat:
+              Isi Otomatis Kredensial Google:
             </span>
             <div className="flex flex-wrap gap-2 pt-1">
               <button
@@ -253,24 +270,17 @@ export const SertifikasiManager: React.FC = () => {
               </button>
               <button
                 type="button"
-                onClick={() => handleApplyPreset('gce2')}
-                className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 hover:bg-blue-200"
-              >
-                + Google Educator L2
-              </button>
-              <button
-                type="button"
-                onClick={() => handleApplyPreset('trainer')}
+                onClick={() => handleApplyPreset('gemini_edu')}
                 className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-300 hover:bg-purple-200"
               >
-                + Google Certified Trainer
+                + Gemini Certified Educator
               </button>
               <button
                 type="button"
-                onClick={() => handleApplyPreset('guru_pai')}
-                className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-200"
+                onClick={() => handleApplyPreset('gemini_fac')}
+                className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-200"
               >
-                + Pendidik Profesi PAI
+                + Gemini Certified Faculty
               </button>
             </div>
           </div>
@@ -301,10 +311,10 @@ export const SertifikasiManager: React.FC = () => {
 
           <div className="grid grid-cols-2 gap-3">
             <Input
-              label="Nomor Sertifikat / Kredensial"
+              label="Nomor Kredensial / ID Accredible"
               value={formData.nomor_sertifikat}
               onChange={(e) => setFormData({ ...formData, nomor_sertifikat: e.target.value })}
-              placeholder="Contoh: GCE-L1-829103"
+              placeholder="Contoh: 191245638"
             />
             <Input
               label="Tahun Perolehan"
@@ -315,10 +325,24 @@ export const SertifikasiManager: React.FC = () => {
           </div>
 
           <Input
+            label="Link Sertifikat Image (Embed Certificate URL)"
+            value={formData.certificate_url}
+            onChange={(e) => setFormData({ ...formData, certificate_url: e.target.value })}
+            placeholder="https://api.accredible.com/v1/frontend/credential_website_embed_image/certificate/..."
+          />
+
+          <Input
+            label="Link Badge Image (Embed Badge URL)"
+            value={formData.badge_url}
+            onChange={(e) => setFormData({ ...formData, badge_url: e.target.value })}
+            placeholder="https://api.accredible.com/v1/frontend/credential_website_embed_image/badge/..."
+          />
+
+          <Input
             label="Link Verifikasi Resmi Kredensial"
             value={formData.link_verifikasi}
             onChange={(e) => setFormData({ ...formData, link_verifikasi: e.target.value })}
-            placeholder="Contoh: https://educertifications.google/ atau link sertifikat"
+            placeholder="https://edu.google.accredible.com/..."
             helperText="Pengunjung dapat mengklik tautan ini untuk memverifikasi keaslian sertifikat Anda."
           />
 
