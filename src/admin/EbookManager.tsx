@@ -23,6 +23,7 @@ import {
   Layers,
   Search,
   Check,
+  Wand2,
 } from 'lucide-react';
 import { useEbook } from '../hooks/useEbook';
 import { EBook, EBookFormat } from '../types/database';
@@ -34,6 +35,7 @@ import { Modal } from '../components/ui/Modal';
 import { Input } from '../components/ui/Input';
 import { useToast } from '../components/ui/Toast';
 import { uploadEbookFile, uploadImage } from '../lib/supabase';
+import { extractEpubMetadataAndCover } from '../lib/epubMetadataHelper';
 
 const R2_DOMAIN_STORAGE_KEY = 'aji_pai_r2_domain';
 const DEFAULT_R2_DOMAIN = 'https://pub-d494b67231904a24a45db5300095094f.r2.dev';
@@ -63,6 +65,7 @@ interface ParsedSyncItem {
   coverUrl: string;
   bahasa: string;
   isDuplicate: boolean;
+  isExtractingCover?: boolean;
 }
 
 export const EbookManager: React.FC = () => {
@@ -81,10 +84,12 @@ export const EbookManager: React.FC = () => {
   const [rawFilesInput, setRawFilesInput] = useState('');
   const [parsedSyncItems, setParsedSyncItems] = useState<ParsedSyncItem[]>([]);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [isBatchExtracting, setIsBatchExtracting] = useState(false);
 
   // Upload progress states
   const [uploadingFile, setUploadingFile] = useState(false);
   const [uploadingCover, setUploadingCover] = useState(false);
+  const [extractingMeta, setExtractingMeta] = useState(false);
 
   // Form states
   const [judul, setJudul] = useState('');
@@ -143,7 +148,7 @@ export const EbookManager: React.FC = () => {
     setModalOpen(true);
   };
 
-  // Upload book file (EPUB, PDF, MOBI, AZW3)
+  // Upload book file (EPUB, PDF, MOBI, AZW3) with automatic cover & metadata extraction
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -159,11 +164,50 @@ export const EbookManager: React.FC = () => {
       else if (ext === 'mobi') setFormatFile('mobi');
       else if (ext === 'azw3') setFormatFile('azw3');
 
-      success(`File ${file.name} berhasil diunggah ke Supabase Storage!`);
+      // Auto-extract EPUB metadata & cover
+      if (ext === 'epub') {
+        try {
+          const meta = await extractEpubMetadataAndCover(file);
+          if (meta.title && !judul) setJudul(meta.title);
+          if (meta.creator && penulis === 'Aji Bagus Khoiri, S.Pd., Gr.') setPenulis(meta.creator);
+          if (meta.publisher && !penerbit) setPenerbit(meta.publisher);
+          if (meta.description && !deskripsi) setDeskripsi(meta.description);
+          if (meta.coverUrl) setCoverUrl(meta.coverUrl);
+          success(`File ${file.name} dan sampul buku berhasil diekstrak otomatis!`);
+        } catch (metaErr) {
+          success(`File ${file.name} berhasil diunggah!`);
+        }
+      } else {
+        success(`File ${file.name} berhasil diunggah ke Supabase Storage!`);
+      }
     } catch (err: any) {
       toastError(`Gagal mengunggah file: ${err.message || 'Error koneksi storage'}`);
     } finally {
       setUploadingFile(false);
+    }
+  };
+
+  // Extract metadata and cover from current URL
+  const handleExtractFromUrl = async () => {
+    const targetUrl = (fileUrl || onedriveUrl || '').trim();
+    if (!targetUrl) {
+      toastError('Mohon isi tautan file EPUB terlebih dahulu.');
+      return;
+    }
+
+    setExtractingMeta(true);
+    try {
+      const meta = await extractEpubMetadataAndCover(targetUrl);
+      if (meta.title) setJudul(meta.title);
+      if (meta.creator) setPenulis(meta.creator);
+      if (meta.publisher) setPenerbit(meta.publisher);
+      if (meta.description) setDeskripsi(meta.description);
+      if (meta.coverUrl) setCoverUrl(meta.coverUrl);
+      success('Sampul asli dan metadata buku berhasil diekstrak!');
+    } catch (err: any) {
+      toastError('Tidak dapat mengekstrak metadata otomatis dari link tersebut.');
+    } finally {
+      setExtractingMeta(false);
     }
   };
 
@@ -317,7 +361,7 @@ export const EbookManager: React.FC = () => {
 
       // Smart Category Heuristic Detection
       const lower = `${fileName} ${detectedTitle} ${detectedAuthor}`.toLowerCase();
-      let detectedCategory = 'Umum & Literasi'; // Default general, NOT Fikih!
+      let detectedCategory = 'Umum & Literasi';
 
       if (
         lower.includes('novel') ||
@@ -460,7 +504,43 @@ export const EbookManager: React.FC = () => {
     });
 
     setParsedSyncItems(results);
-    success(`Berhasil mendeteksi ${results.length} file buku! Anda dapat mengedit judul, penulis, dan kategori sebelum menyimpan.`);
+    success(`Berhasil mendeteksi ${results.length} file buku! Anda dapat mengklik "Ekstrak Sampul Asli" atau langsung menyimpan.`);
+  };
+
+  // Batch extract real covers from EPUB files in the list
+  const handleBatchExtractCovers = async () => {
+    const epubItems = parsedSyncItems.filter((i) => i.format === 'epub');
+    if (epubItems.length === 0) {
+      toastError('Tidak ada file format EPUB dalam daftar untuk diekstrak sampulnya.');
+      return;
+    }
+
+    setIsBatchExtracting(true);
+    let extractedCount = 0;
+
+    for (const item of epubItems) {
+      try {
+        updateParsedItem(item.id, 'isExtractingCover', true);
+        const meta = await extractEpubMetadataAndCover(item.fileUrl);
+        if (meta.coverUrl) {
+          updateParsedItem(item.id, 'coverUrl', meta.coverUrl);
+          extractedCount++;
+        }
+        if (meta.title && item.judul === item.fileUrl.split('/').pop()) {
+          updateParsedItem(item.id, 'judul', meta.title);
+        }
+        if (meta.creator) {
+          updateParsedItem(item.id, 'penulis', meta.creator);
+        }
+      } catch (err) {
+        console.warn(`Could not extract cover for ${item.judul}:`, err);
+      } finally {
+        updateParsedItem(item.id, 'isExtractingCover', false);
+      }
+    }
+
+    setIsBatchExtracting(false);
+    success(`Selesai mengekstrak sampul asli untuk ${extractedCount} buku EPUB!`);
   };
 
   // Modify individual parsed item in table
@@ -664,21 +744,21 @@ export const EbookManager: React.FC = () => {
         </div>
       )}
 
-      {/* Modal Cloudflare R2 Auto-Sync with Editable Rows */}
+      {/* Modal Cloudflare R2 Auto-Sync with Cover Extractor */}
       <Modal
         isOpen={syncModalOpen}
         onClose={() => setSyncModalOpen(false)}
-        title="⚡ Sinkronisasi & Ekstraksi Metadata R2"
+        title="⚡ Sinkronisasi, Sampul & Metadata R2"
         size="xl"
       >
         <div className="space-y-4">
           <div className="p-4 rounded-2xl bg-orange-50/60 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-800 space-y-2">
             <div className="flex items-center gap-2 font-bold text-xs text-orange-800 dark:text-orange-300">
               <Zap className="w-4 h-4 text-orange-500" />
-              <span>Ekstraksi Metadata Cerdas (Novel, Sastra, Modul, & Turats)</span>
+              <span>Ekstraksi Sampul & Metadata Cerdas dari EPUB</span>
             </div>
             <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-              Tempelkan daftar file buku dari Cloudflare R2. Sistem otomatis mengenali <strong>Penulis</strong>, <strong>Judul Asli</strong>, dan <strong>Kategori yang Tepat</strong> (Novel, Modul Ajar, Fikih, Hadits, dll). Anda juga bisa langsung mengeditnya pada tabel pratinjau sebelum disimpan!
+              Tempelkan daftar file buku dari Cloudflare R2. Sistem dapat mengekstrak <strong>Sampul Asli</strong> dari dalam file EPUB secara otomatis, memisahkan <strong>Penulis</strong> & <strong>Judul</strong>, serta menentukan kategori yang akurat!
             </p>
           </div>
 
@@ -707,7 +787,7 @@ export const EbookManager: React.FC = () => {
             />
           </div>
 
-          <div className="flex justify-end">
+          <div className="flex justify-end gap-2">
             <Button type="button" variant="outline" size="sm" onClick={handleParseR2Files}>
               <Search className="w-3.5 h-3.5 mr-1" />
               Pindai & Ekstrak Metadata
@@ -717,79 +797,110 @@ export const EbookManager: React.FC = () => {
           {/* Parsed Interactive Editable Preview Table */}
           {parsedSyncItems.length > 0 && (
             <div className="space-y-3 pt-2 border-t border-slate-200 dark:border-slate-800">
-              <div className="flex items-center justify-between">
-                <h4 className="text-xs font-bold text-slate-800 dark:text-slate-200">
-                  Hasil Ekstraksi Metadata ({parsedSyncItems.length} Buku):
-                </h4>
-                <span className="text-[11px] text-slate-400">
-                  {parsedSyncItems.filter((i) => !i.isDuplicate).length} siap diimpor • {parsedSyncItems.filter((i) => i.isDuplicate).length} duplikat
-                </span>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div>
+                  <h4 className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                    Hasil Ekstraksi Metadata ({parsedSyncItems.length} Buku):
+                  </h4>
+                  <span className="text-[11px] text-slate-400">
+                    {parsedSyncItems.filter((i) => !i.isDuplicate).length} siap diimpor • {parsedSyncItems.filter((i) => i.isDuplicate).length} duplikat
+                  </span>
+                </div>
+
+                {/* Batch Extract Real Covers Button */}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleBatchExtractCovers}
+                  isLoading={isBatchExtracting}
+                  className="border-purple-500/40 text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-950/30 text-xs"
+                >
+                  <Wand2 className="w-3.5 h-3.5 mr-1.5 text-purple-500" />
+                  Ekstrak Sampul Asli dari EPUB
+                </Button>
               </div>
 
               <div className="max-h-72 overflow-y-auto rounded-xl border border-slate-200 dark:border-slate-800 divide-y divide-slate-100 dark:divide-slate-800 text-xs">
                 {parsedSyncItems.map((item) => (
-                  <div key={item.id} className="p-3 bg-white dark:bg-slate-900 space-y-2.5">
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-2">
-                        <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase bg-purple-100 dark:bg-purple-950/60 text-purple-600">
-                          {item.format}
-                        </span>
-                        {item.isDuplicate ? (
-                          <span className="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 text-[10px] font-bold">
-                            Sudah Ada
-                          </span>
-                        ) : (
-                          <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 text-[10px] font-bold">
-                            Siap Diimpor
-                          </span>
-                        )}
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={() => removeParsedItem(item.id)}
-                        className="text-red-500 hover:text-red-600 p-1 rounded hover:bg-red-50 dark:hover:bg-red-950/50"
-                        title="Hapus dari daftar impor"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
+                  <div key={item.id} className="p-3 bg-white dark:bg-slate-900 flex gap-3">
+                    {/* Cover Thumbnail Preview */}
+                    <div className="w-14 h-20 rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-800 shrink-0 border relative">
+                      <img
+                        src={item.coverUrl}
+                        alt="Cover"
+                        className="w-full h-full object-cover"
+                      />
+                      {item.isExtractingCover && (
+                        <div className="absolute inset-0 bg-slate-950/60 flex items-center justify-center">
+                          <Loader2 className="w-4 h-4 animate-spin text-white" />
+                        </div>
+                      )}
                     </div>
 
-                    {/* In-Table Editable Inputs */}
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                      <div>
-                        <label className="text-[10px] font-semibold text-slate-500 block mb-0.5">Judul Buku</label>
-                        <input
-                          type="text"
-                          value={item.judul}
-                          onChange={(e) => updateParsedItem(item.id, 'judul', e.target.value)}
-                          className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-2.5 py-1 text-xs font-bold text-slate-900 dark:text-white"
-                        />
-                      </div>
+                    <div className="flex-1 space-y-2 min-w-0">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase bg-purple-100 dark:bg-purple-950/60 text-purple-600">
+                            {item.format}
+                          </span>
+                          {item.isDuplicate ? (
+                            <span className="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 text-[10px] font-bold">
+                              Sudah Ada
+                            </span>
+                          ) : (
+                            <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 text-[10px] font-bold">
+                              Siap Diimpor
+                            </span>
+                          )}
+                        </div>
 
-                      <div>
-                        <label className="text-[10px] font-semibold text-slate-500 block mb-0.5">Penulis / Pengarang</label>
-                        <input
-                          type="text"
-                          value={item.penulis}
-                          onChange={(e) => updateParsedItem(item.id, 'penulis', e.target.value)}
-                          className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-2.5 py-1 text-xs text-slate-800 dark:text-slate-200"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="text-[10px] font-semibold text-slate-500 block mb-0.5">Kategori</label>
-                        <select
-                          value={item.kategori}
-                          onChange={(e) => updateParsedItem(item.id, 'kategori', e.target.value)}
-                          className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-2 py-1 text-xs font-semibold text-brand-600 dark:text-brand-400"
+                        <button
+                          type="button"
+                          onClick={() => removeParsedItem(item.id)}
+                          className="text-red-500 hover:text-red-600 p-1 rounded hover:bg-red-50 dark:hover:bg-red-950/50"
+                          title="Hapus dari daftar impor"
                         >
-                          {CATEGORY_PRESETS.map((cat) => (
-                            <option key={cat} value={cat}>
-                              {cat}
-                            </option>
-                          ))}
-                        </select>
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+
+                      {/* In-Table Editable Inputs */}
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                        <div>
+                          <label className="text-[10px] font-semibold text-slate-500 block mb-0.5">Judul Buku</label>
+                          <input
+                            type="text"
+                            value={item.judul}
+                            onChange={(e) => updateParsedItem(item.id, 'judul', e.target.value)}
+                            className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-2.5 py-1 text-xs font-bold text-slate-900 dark:text-white"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="text-[10px] font-semibold text-slate-500 block mb-0.5">Penulis / Pengarang</label>
+                          <input
+                            type="text"
+                            value={item.penulis}
+                            onChange={(e) => updateParsedItem(item.id, 'penulis', e.target.value)}
+                            className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-2.5 py-1 text-xs text-slate-800 dark:text-slate-200"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="text-[10px] font-semibold text-slate-500 block mb-0.5">Kategori</label>
+                          <select
+                            value={item.kategori}
+                            onChange={(e) => updateParsedItem(item.id, 'kategori', e.target.value)}
+                            className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-2 py-1 text-xs font-semibold text-brand-600 dark:text-brand-400"
+                          >
+                            {CATEGORY_PRESETS.map((cat) => (
+                              <option key={cat} value={cat}>
+                                {cat}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -910,6 +1021,22 @@ export const EbookManager: React.FC = () => {
                 <Cloud className="w-4 h-4 text-orange-500" />
                 <span>Tautan Cloudflare R2 / Direct File URL (EPUB, PDF, MOBI)</span>
               </div>
+              <button
+                type="button"
+                onClick={handleExtractFromUrl}
+                disabled={extractingMeta || !fileUrl}
+                className="text-xs text-orange-600 hover:text-orange-700 dark:text-orange-400 font-bold inline-flex items-center gap-1 disabled:opacity-50"
+              >
+                {extractingMeta ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" /> Mengekstrak...
+                  </>
+                ) : (
+                  <>
+                    <Wand2 className="w-3.5 h-3.5" /> Ekstrak Sampul & Meta dari URL
+                  </>
+                )}
+              </button>
             </div>
             <Input
               label="Tautan Direct File / Cloudflare R2 URL"
@@ -945,7 +1072,7 @@ export const EbookManager: React.FC = () => {
               </div>
               {uploadingFile && (
                 <span className="flex items-center gap-1 text-[11px] text-purple-600 font-semibold animate-pulse">
-                  <Loader2 className="w-3 h-3 animate-spin" /> Mengunggah...
+                  <Loader2 className="w-3 h-3 animate-spin" /> Mengunggah & mengekstrak sampul...
                 </span>
               )}
             </div>
@@ -1000,7 +1127,7 @@ export const EbookManager: React.FC = () => {
                 <img
                   src={coverUrl}
                   alt="Preview"
-                  className="w-8 h-10 object-cover rounded border"
+                  className="w-10 h-14 object-cover rounded-lg border shadow-xs"
                 />
               )}
             </div>
@@ -1008,7 +1135,7 @@ export const EbookManager: React.FC = () => {
             <Input
               value={coverUrl}
               onChange={(e) => setCoverUrl(e.target.value)}
-              placeholder="https://images.unsplash.com/..."
+              placeholder="https://images.unsplash.com/... atau URL cover dari EPUB"
             />
           </div>
 
@@ -1042,7 +1169,7 @@ export const EbookManager: React.FC = () => {
               rows={3}
               value={deskripsi}
               onChange={(e) => setDeskripsi(e.target.value)}
-              placeholder="Ringkasan isi kitab, pokok bahasan, dan target pembaca..."
+              placeholder="Ringkasan isi kitab/novel, pokok bahasan, dan target pembaca..."
               className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 p-3 text-sm"
             />
           </div>
