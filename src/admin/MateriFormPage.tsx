@@ -82,7 +82,7 @@ export const MateriFormPage: React.FC = () => {
         setKonten(existing.konten);
         setGambarCoverUrl(existing.gambar_cover_url || '');
         setKategoriId(existing.kategori_id || '');
-        setStatus(existing.status);
+        setStatus((existing.status as 'published' | 'draft') || (existing.published ? 'published' : 'draft') || 'published');
         if (existing.tags) {
           setSelectedTagIds(existing.tags.map((t) => t.id));
         }
@@ -92,7 +92,7 @@ export const MateriFormPage: React.FC = () => {
               nama_file: f.nama_file,
               file_url: f.file_url,
               tipe: f.tipe,
-              ukuran_bytes: f.ukuran_bytes || undefined,
+              ukuran_bytes: f.ukuran_bytes ?? undefined,
             }))
           );
         }
@@ -217,6 +217,13 @@ export const MateriFormPage: React.FC = () => {
 
     const selectedTags = tags.filter((t) => selectedTagIds.includes(t.id));
 
+    const sanitizedFiles: Omit<MateriFile, 'id' | 'created_at' | 'materi_id'>[] = files.map((f) => ({
+      nama_file: f.nama_file,
+      file_url: f.file_url,
+      tipe: f.tipe,
+      ukuran_bytes: f.ukuran_bytes ?? null,
+    }));
+
     try {
       if (isEdit && id) {
         await updateMateri({
@@ -230,8 +237,11 @@ export const MateriFormPage: React.FC = () => {
             kategori_id: kategoriId || null,
             status,
             tags: selectedTags,
+            kelas: 'Fase D',
+            semester: '1',
+            elemen: 'Qur\'an Hadits',
           },
-          files,
+          files: sanitizedFiles as any,
         });
         success('Materi PAI berhasil diperbarui!');
       } else {
@@ -245,8 +255,11 @@ export const MateriFormPage: React.FC = () => {
             kategori_id: kategoriId || null,
             status,
             tags: selectedTags,
+            kelas: 'Fase D',
+            semester: '1',
+            elemen: 'Qur\'an Hadits',
           },
-          files,
+          files: sanitizedFiles as any,
         });
         success('Materi PAI baru berhasil diterbitkan!');
       }

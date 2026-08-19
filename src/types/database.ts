@@ -6,6 +6,7 @@ export type SectionKey =
   | 'youtube'
   | 'terjemahan'
   | 'karya'
+  | 'ebook'
   | 'testimoni'
   | 'faq'
   | 'statistik'
@@ -47,10 +48,8 @@ export interface KategoriMateri {
   parent_id: string | null;
   urutan: number;
   created_at?: string;
-  // Nested helper properties
   children?: KategoriMateri[];
-  level?: number;
-  parent_nama?: string;
+  materi_count?: number;
 }
 
 export interface Tag {
@@ -63,37 +62,41 @@ export interface Tag {
 export interface MateriTag {
   materi_id: string;
   tag_id: string;
-  tag?: Tag;
-}
-
-export interface MateriFile {
-  id: string;
-  materi_id: string;
-  nama_file: string;
-  file_url: string;
-  tipe: 'pdf' | 'ppt' | 'word' | 'excel' | 'zip' | 'drive' | 'onedrive' | 'canva' | 'other' | string;
-  ukuran_bytes?: number;
-  created_at?: string;
 }
 
 export interface MateriPAI {
   id: string;
   judul: string;
   slug: string;
-  deskripsi_singkat: string | null;
+  ringkasan?: string;
+  deskripsi_singkat?: string;
   konten: string;
-  gambar_cover_url: string | null;
-  kategori_id: string | null;
-  status: 'draft' | 'published';
-  view_count: number;
-  created_at: string;
-  updated_at: string;
-  // Joined or resolved
-  kategori?: KategoriMateri | null;
+  kelas?: '7' | '8' | '9' | 'Fase D' | string;
+  semester?: '1' | '2' | 'Semua' | string;
+  elemen?: 'Qur\'an Hadits' | 'Akidah' | 'Akhlak' | 'Fiqih' | 'SKI' | 'Umum' | string;
+  kategori_id?: string | null;
+  thumbnail_url?: string | null;
+  gambar_cover_url?: string | null;
+  published?: boolean;
+  status?: 'published' | 'draft' | string;
+  views_count?: number;
+  view_count?: number;
+  created_at?: string;
+  updated_at?: string;
+  kategori?: KategoriMateri;
   files?: MateriFile[];
   tags?: Tag[];
   komentar_count?: number;
-  pending_komentar_count?: number;
+}
+
+export interface MateriFile {
+  id: string;
+  materi_id?: string;
+  nama_file: string;
+  file_url: string;
+  tipe: 'pdf' | 'ppt' | 'excel' | 'word' | 'drive' | 'onedrive' | 'canva' | 'lainnya' | string;
+  ukuran_bytes?: number | null;
+  created_at?: string;
 }
 
 export interface Komentar {
@@ -104,18 +107,13 @@ export interface Komentar {
   konten: string;
   status: 'pending' | 'approved' | 'rejected';
   parent_id?: string | null;
-  created_at: string;
-  materi?: {
-    id: string;
-    judul: string;
-    slug: string;
-  };
+  created_at?: string;
 }
 
 export interface Subscriber {
   id: string;
   email: string;
-  created_at: string;
+  created_at?: string;
 }
 
 export interface Riwayat {
@@ -124,9 +122,9 @@ export interface Riwayat {
   instansi_organisasi: string;
   jenis: 'pendidikan' | 'organisasi' | 'pengalaman' | 'sertifikasi';
   tahun_mulai: number;
-  tahun_selesai?: number | null;
-  deskripsi?: string | null;
-  link_verifikasi?: string | null;
+  tahun_selesai: number | null;
+  deskripsi: string | null;
+  link_verifikasi: string | null;
   badge_url?: string | null;
   certificate_url?: string | null;
   accredible_id?: string | null;
@@ -142,9 +140,9 @@ export interface Testimoni {
   konten: string;
   foto_url?: string | null;
   status: 'pending' | 'approved' | 'rejected';
-  rating: number; // 1 to 5
+  rating: number;
   urutan: number;
-  created_at: string;
+  created_at?: string;
 }
 
 export interface FAQ {
@@ -160,27 +158,58 @@ export interface FAQ {
 export interface ProyekTerjemahan {
   id: string;
   judul: string;
-  slug?: string;
-  bahasa_asal: string;
-  bahasa_tujuan: string;
+  penulis_asli?: string;
+  bahasa_sumber?: string;
+  bahasa_asal?: string;
+  bahasa_target?: string;
+  bahasa_tujuan?: string;
   deskripsi: string | null;
-  link_file: string | null;
+  status?: 'Selesai' | 'Proses' | 'Direncanakan' | string;
+  progress_persen?: number;
+  cover_url?: string | null;
+  file_url?: string | null;
+  link_file?: string | null;
   tahun: number;
   urutan: number;
+  is_featured?: boolean;
   created_at?: string;
 }
 
 export interface Karya {
   id: string;
   judul: string;
-  slug?: string;
+  tipe?: 'Buku' | 'Modul' | 'Infografis' | 'Artikel' | 'Karya Lain' | string;
   deskripsi: string | null;
-  gambar_url: string;
-  link_eksternal: string | null;
+  link_terkait?: string | null;
+  link_eksternal?: string | null;
+  gambar_url?: string | null;
   kategori: string;
   tahun?: number;
   urutan: number;
   created_at?: string;
+}
+
+export type EBookFormat = 'pdf' | 'epub' | 'mobi' | 'azw3' | 'onedrive' | 'gdrive';
+
+export interface EBook {
+  id: string;
+  judul: string;
+  penulis_pengarang: string;
+  penerbit_pentahqiq?: string | null;
+  kategori: string;
+  deskripsi?: string | null;
+  cover_url?: string | null;
+  format_file: EBookFormat;
+  file_url?: string | null;
+  onedrive_embed_url?: string | null;
+  tahun_terbit?: number | string | null;
+  jumlah_halaman?: number | null;
+  bahasa: 'Indonesia' | 'Arab' | 'Pegon' | 'Bilingual' | string;
+  is_downloadable?: boolean;
+  is_featured: boolean;
+  urutan: number;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface YouTubeVideo {
@@ -212,7 +241,7 @@ export interface Sertifikasi {
 
 export interface GlobalSearchResult {
   id: string;
-  type: 'materi' | 'terjemahan' | 'karya';
+  type: 'materi' | 'terjemahan' | 'karya' | 'ebook';
   title: string;
   snippet: string;
   category?: string;
@@ -225,6 +254,7 @@ export interface StatistikData {
   totalMateri: number;
   totalTerjemahan: number;
   totalKarya: number;
+  totalEbook: number;
   totalVideo: number;
   jamPelatihan: number;
   totalGuruTerlatih: number;

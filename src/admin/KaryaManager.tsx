@@ -47,8 +47,8 @@ export const KaryaManager: React.FC = () => {
     setFormData({
       judul: item.judul,
       deskripsi: item.deskripsi || '',
-      gambar_url: item.gambar_url,
-      link_eksternal: item.link_eksternal || '',
+      gambar_url: item.gambar_url || '',
+      link_eksternal: item.link_eksternal || item.link_terkait || '',
       kategori: item.kategori,
       urutan: item.urutan,
     });
@@ -142,7 +142,7 @@ export const KaryaManager: React.FC = () => {
               <div>
                 <div className="relative aspect-[4/3] overflow-hidden bg-slate-900">
                   <img
-                    src={item.gambar_url}
+                    src={item.gambar_url || 'https://images.unsplash.com/photo-1581291518857-4e27b48ff24e?auto=format&fit=crop&w=800&q=80'}
                     alt={item.judul}
                     className="w-full h-full object-cover"
                   />

@@ -16,6 +16,7 @@ async function generateSitemap() {
   const staticRoutes = [
     { url: '/', priority: '1.0', changefreq: 'daily' },
     { url: '/materi', priority: '0.9', changefreq: 'daily' },
+    { url: '/ebook', priority: '0.9', changefreq: 'daily' },
     { url: '/terjemahan', priority: '0.8', changefreq: 'weekly' },
     { url: '/karya', priority: '0.8', changefreq: 'weekly' },
   ];

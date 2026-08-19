@@ -100,7 +100,7 @@ export const KaryaSection: React.FC = () => {
                       }}
                     >
                       <img
-                        src={item.gambar_url}
+                        src={item.gambar_url || 'https://images.unsplash.com/photo-1581291518857-4e27b48ff24e?auto=format&fit=crop&w=800&q=80'}
                         alt={item.judul}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                         loading="lazy"
@@ -174,7 +174,7 @@ export const KaryaSection: React.FC = () => {
           <div className="space-y-4">
             <div className="rounded-xl overflow-hidden max-h-[70vh] flex items-center justify-center bg-slate-950">
               <img
-                src={lightboxKarya.gambar_url}
+                src={lightboxKarya.gambar_url || 'https://images.unsplash.com/photo-1581291518857-4e27b48ff24e?auto=format&fit=crop&w=800&q=80'}
                 alt={lightboxKarya.judul}
                 className="max-h-[65vh] w-auto object-contain rounded-lg"
               />

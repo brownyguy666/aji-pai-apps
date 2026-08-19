@@ -5,6 +5,7 @@ import {
   initialMateri,
   initialTerjemahan,
   initialKarya,
+  initialEbooks,
 } from '../lib/seedData';
 
 let debounceTimeout: any = null;
@@ -34,15 +35,32 @@ export const useGlobalSearch = () => {
           if (
             m.judul.toLowerCase().includes(q) ||
             m.konten.toLowerCase().includes(q) ||
-            m.deskripsi_singkat?.toLowerCase().includes(q)
+            m.ringkasan?.toLowerCase().includes(q)
           ) {
             localResults.push({
               id: m.id,
               type: 'materi',
               title: m.judul,
-              snippet: m.deskripsi_singkat || m.konten.slice(0, 120) + '...',
+              snippet: m.ringkasan || m.konten.slice(0, 120) + '...',
               url: `/materi/${m.slug}`,
-              category: m.kategori?.nama || 'Materi PAI',
+              category: m.elemen || 'Materi PAI',
+            });
+          }
+        });
+
+        initialEbooks.forEach((eb) => {
+          if (
+            eb.judul.toLowerCase().includes(q) ||
+            eb.penulis_pengarang.toLowerCase().includes(q) ||
+            eb.deskripsi?.toLowerCase().includes(q)
+          ) {
+            localResults.push({
+              id: eb.id,
+              type: 'ebook',
+              title: eb.judul,
+              snippet: `Karya ${eb.penulis_pengarang} (${eb.format_file.toUpperCase()}). ${eb.deskripsi || ''}`,
+              url: '/ebook',
+              category: eb.kategori,
             });
           }
         });
@@ -51,14 +69,14 @@ export const useGlobalSearch = () => {
           if (
             t.judul.toLowerCase().includes(q) ||
             t.deskripsi?.toLowerCase().includes(q) ||
-            t.bahasa_asal.toLowerCase().includes(q)
+            (t.penulis_asli && t.penulis_asli.toLowerCase().includes(q))
           ) {
             localResults.push({
               id: t.id,
               type: 'terjemahan',
               title: t.judul,
-              snippet: `${t.bahasa_asal} ➔ ${t.bahasa_tujuan} (${t.tahun}). ${t.deskripsi || ''}`,
-              url: t.link_file || '/terjemahan',
+              snippet: `${t.bahasa_sumber || t.bahasa_asal || 'Arab'} ➔ ${t.bahasa_target || t.bahasa_tujuan || 'Indonesia'} (${t.tahun}). ${t.deskripsi || ''}`,
+              url: '/terjemahan',
               category: 'Proyek Terjemahan',
             });
           }
@@ -75,7 +93,7 @@ export const useGlobalSearch = () => {
               type: 'karya',
               title: k.judul,
               snippet: k.deskripsi || 'Media edukasi dan publikasi PAI.',
-              url: k.link_eksternal || '/karya',
+              url: '/karya',
               category: k.kategori,
             });
           }
@@ -87,22 +105,27 @@ export const useGlobalSearch = () => {
       }
 
       try {
-        // Run parallel queries across Materi, Terjemahan, and Karya in Supabase
-        const [materiRes, terjemahanRes, karyaRes] = await Promise.all([
+        // Run parallel queries across Materi, Ebooks, Terjemahan, and Karya in Supabase
+        const [materiRes, ebookRes, terjemahanRes, karyaRes] = await Promise.all([
           supabase
             .from('materi_pai')
-            .select('id, judul, slug, deskripsi_singkat, status, kategori:kategori_materi(nama)')
-            .eq('status', 'published')
-            .or(`judul.ilike.%${q}%,deskripsi_singkat.ilike.%${q}%,konten.ilike.%${q}%`)
+            .select('id, judul, slug, ringkasan, published, elemen')
+            .eq('published', true)
+            .or(`judul.ilike.%${q}%,ringkasan.ilike.%${q}%,konten.ilike.%${q}%`)
+            .limit(5),
+          supabase
+            .from('ebooks')
+            .select('id, judul, penulis_pengarang, kategori, deskripsi, format_file')
+            .or(`judul.ilike.%${q}%,penulis_pengarang.ilike.%${q}%,deskripsi.ilike.%${q}%,kategori.ilike.%${q}%`)
             .limit(5),
           supabase
             .from('proyek_terjemahan')
-            .select('id, judul, bahasa_asal, bahasa_tujuan, tahun, deskripsi, link_file')
-            .or(`judul.ilike.%${q}%,deskripsi.ilike.%${q}%`)
+            .select('id, judul, penulis_asli, bahasa_sumber, bahasa_target, tahun, deskripsi')
+            .or(`judul.ilike.%${q}%,deskripsi.ilike.%${q}%,penulis_asli.ilike.%${q}%`)
             .limit(5),
           supabase
             .from('karya')
-            .select('id, judul, deskripsi, kategori, link_eksternal')
+            .select('id, judul, deskripsi, kategori')
             .or(`judul.ilike.%${q}%,deskripsi.ilike.%${q}%,kategori.ilike.%${q}%`)
             .limit(5),
         ]);
@@ -115,9 +138,22 @@ export const useGlobalSearch = () => {
               id: m.id,
               type: 'materi',
               title: m.judul,
-              snippet: m.deskripsi_singkat || 'Modul Pembelajaran PAI',
+              snippet: m.ringkasan || 'Modul Pembelajaran PAI',
               url: `/materi/${m.slug}`,
-              category: m.kategori?.nama || 'Materi PAI',
+              category: m.elemen || 'Materi PAI',
+            });
+          });
+        }
+
+        if (ebookRes.data) {
+          ebookRes.data.forEach((b: any) => {
+            combined.push({
+              id: b.id,
+              type: 'ebook',
+              title: b.judul,
+              snippet: `Karya ${b.penulis_pengarang} (${b.format_file.toUpperCase()}). ${b.deskripsi || ''}`,
+              url: '/ebook',
+              category: b.kategori,
             });
           });
         }
@@ -128,8 +164,8 @@ export const useGlobalSearch = () => {
               id: t.id,
               type: 'terjemahan',
               title: t.judul,
-              snippet: `${t.bahasa_asal} ➔ ${t.bahasa_tujuan} (${t.tahun})`,
-              url: t.link_file || '/terjemahan',
+              snippet: `${t.bahasa_sumber || t.bahasa_asal || 'Arab'} ➔ ${t.bahasa_target || t.bahasa_tujuan || 'Indonesia'} (${t.tahun})`,
+              url: '/terjemahan',
               category: 'Proyek Terjemahan',
             });
           });
@@ -142,7 +178,7 @@ export const useGlobalSearch = () => {
               type: 'karya',
               title: k.judul,
               snippet: k.deskripsi || 'Galeri Karya & Portofolio',
-              url: k.link_eksternal || '/karya',
+              url: '/karya',
               category: k.kategori,
             });
           });

@@ -66,6 +66,7 @@ export const Navbar: React.FC = () => {
   const navLinks = [
     { label: 'Beranda', href: '/' },
     { label: 'Materi PAI', href: '/materi' },
+    { label: 'Pustaka E-Book', href: '/ebook' },
     { label: 'Sertifikasi', href: '/#sertifikasi' },
     { label: 'Video YouTube', href: '/#youtube' },
     { label: 'Terjemahan Kitab', href: '/terjemahan' },

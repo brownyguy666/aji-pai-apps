@@ -16,6 +16,7 @@ import {
   MessageSquare,
   HelpCircle,
   Mail,
+  Library,
   Clock,
   CheckCircle,
 } from 'lucide-react';
@@ -23,6 +24,7 @@ import { useMateri } from '../hooks/useMateri';
 import { useSections } from '../hooks/useSections';
 import { useTerjemahan } from '../hooks/useTerjemahan';
 import { useKarya } from '../hooks/useKarya';
+import { useEbook } from '../hooks/useEbook';
 import { useYouTube } from '../hooks/useYouTube';
 import { useRiwayat } from '../hooks/useRiwayat';
 import { useKomentar } from '../hooks/useKomentar';
@@ -37,6 +39,7 @@ export const AdminDashboardPage: React.FC = () => {
   const { sections, activeSections } = useSections();
   const { terjemahanList } = useTerjemahan();
   const { karyaList } = useKarya();
+  const { ebookList } = useEbook();
   const { videos } = useYouTube();
   const { riwayatList } = useRiwayat();
   const { pendingCount: pendingKomentar } = useKomentar({ status: 'pending' });
@@ -48,10 +51,18 @@ export const AdminDashboardPage: React.FC = () => {
     {
       title: 'Materi PAI',
       count: materiList.length,
-      subtitle: `${materiList.filter((m) => m.status === 'published').length} modul aktif`,
+      subtitle: `${materiList.filter((m) => m.published).length} modul aktif`,
       icon: BookOpen,
       color: 'bg-emerald-500 text-white',
       link: '/admin/materi',
+    },
+    {
+      title: 'Pustaka E-Book',
+      count: ebookList.length,
+      subtitle: 'EPUB, PDF & MOBI',
+      icon: Library,
+      color: 'bg-purple-500 text-white',
+      link: '/admin/ebook',
     },
     {
       title: 'Terjemahan Kitab',
@@ -70,15 +81,6 @@ export const AdminDashboardPage: React.FC = () => {
       link: '/admin/karya',
     },
     {
-      title: 'Section Landing Page',
-      count: `${activeSections.length} / ${sections.length}`,
-      subtitle: 'Aktif di beranda',
-      icon: MoveVertical,
-      color: 'bg-indigo-500 text-white',
-      link: '/admin/sections',
-    },
-    // Phase 2 New Stat Cards
-    {
       title: 'Komentar Pending',
       count: pendingKomentar,
       subtitle: pendingKomentar > 0 ? 'Perlu ditinjau' : 'Semua termoderasi',
@@ -95,11 +97,11 @@ export const AdminDashboardPage: React.FC = () => {
       link: '/admin/testimoni',
     },
     {
-      title: 'Subscriber Newsletter',
+      title: 'Subscriber Email',
       count: subscribers.length,
-      subtitle: 'Email terdaftar',
+      subtitle: 'Newsletter aktif',
       icon: Mail,
-      color: 'bg-purple-500 text-white',
+      color: 'bg-blue-500 text-white',
       link: '/admin/subscriber',
     },
   ];
@@ -113,11 +115,17 @@ export const AdminDashboardPage: React.FC = () => {
             Selamat Datang, {profile.nama.split(',')[0]}!
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Dashboard terpadu Phase 2: Moderasi komentar, subscriber newsletter, rekam jejak, dan materi PAI Fase D.
+            Dashboard terpadu: Pustaka e-book, moderasi komentar, subscriber newsletter, rekam jejak, dan materi PAI Fase D.
           </p>
         </div>
 
         <div className="flex items-center gap-2">
+          <Link to="/admin/ebook">
+            <Button variant="outline" size="md">
+              <Library className="w-4 h-4 mr-1.5 text-purple-500" />
+              Kelola E-Book
+            </Button>
+          </Link>
           <Link to="/admin/materi/new">
             <Button variant="primary" size="md">
               <Plus className="w-4 h-4 mr-1.5" />
@@ -168,7 +176,7 @@ export const AdminDashboardPage: React.FC = () => {
                 Kontrol Modular Landing Page
               </h3>
               <p className="text-xs text-slate-500">
-                Atur urutan dan visibilitas 10+ section beranda dengan Drag & Drop / Tombol Panah.
+                Atur urutan dan visibilitas 11+ section beranda dengan Drag & Drop / Tombol Panah.
               </p>
             </div>
           </div>
@@ -216,15 +224,23 @@ export const AdminDashboardPage: React.FC = () => {
             </div>
             <div>
               <h3 className="font-display font-bold text-base text-slate-900 dark:text-white">
-                Pintasan Manajemen Cepat (Phase 2)
+                Pintasan Manajemen Cepat
               </h3>
               <p className="text-xs text-slate-500">
-                Akses instan ke modul moderasi komentar, subscriber, dan Tanya Jawab (FAQ).
+                Akses instan ke pustaka e-book, moderasi komentar, subscriber, dan Tanya Jawab (FAQ).
               </p>
             </div>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 pt-1">
+            <Link
+              to="/admin/ebook"
+              className="p-3 rounded-xl bg-slate-50 hover:bg-slate-100 dark:bg-slate-800/60 dark:hover:bg-slate-800 border border-slate-200/60 dark:border-slate-700/60 text-xs font-semibold flex items-center gap-2 transition-colors"
+            >
+              <Library className="w-4 h-4 text-purple-500" />
+              <span>Pustaka E-Book</span>
+            </Link>
+
             <Link
               to="/admin/komentar"
               className="p-3 rounded-xl bg-slate-50 hover:bg-slate-100 dark:bg-slate-800/60 dark:hover:bg-slate-800 border border-slate-200/60 dark:border-slate-700/60 text-xs font-semibold flex items-center gap-2 transition-colors"
@@ -253,7 +269,7 @@ export const AdminDashboardPage: React.FC = () => {
               to="/admin/subscriber"
               className="p-3 rounded-xl bg-slate-50 hover:bg-slate-100 dark:bg-slate-800/60 dark:hover:bg-slate-800 border border-slate-200/60 dark:border-slate-700/60 text-xs font-semibold flex items-center gap-2 transition-colors"
             >
-              <Mail className="w-4 h-4 text-purple-500" />
+              <Mail className="w-4 h-4 text-blue-500" />
               <span>Subscriber Email</span>
             </Link>
 
@@ -262,15 +278,7 @@ export const AdminDashboardPage: React.FC = () => {
               className="p-3 rounded-xl bg-slate-50 hover:bg-slate-100 dark:bg-slate-800/60 dark:hover:bg-slate-800 border border-slate-200/60 dark:border-slate-700/60 text-xs font-semibold flex items-center gap-2 transition-colors"
             >
               <GraduationCap className="w-4 h-4 text-emerald-500" />
-              <span>Riwayat & Kredensial</span>
-            </Link>
-
-            <Link
-              to="/admin/kategori"
-              className="p-3 rounded-xl bg-slate-50 hover:bg-slate-100 dark:bg-slate-800/60 dark:hover:bg-slate-800 border border-slate-200/60 dark:border-slate-700/60 text-xs font-semibold flex items-center gap-2 transition-colors"
-            >
-              <Layers className="w-4 h-4 text-brand-500" />
-              <span>Kategori Fase D</span>
+              <span>Riwayat & Karir</span>
             </Link>
           </div>
         </Card>

@@ -12,6 +12,7 @@ import { MateriListPage } from './pages/MateriListPage';
 import { MateriDetailPage } from './pages/MateriDetailPage';
 import { TerjemahanPage } from './pages/TerjemahanPage';
 import { KaryaPage } from './pages/KaryaPage';
+import { EbookListPage } from './pages/EbookListPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 
 // Admin Layout & Pages
@@ -25,6 +26,7 @@ import { RiwayatManager } from './admin/RiwayatManager';
 import { MateriManager } from './admin/MateriManager';
 import { MateriFormPage } from './admin/MateriFormPage';
 import { KategoriManager } from './admin/KategoriManager';
+import { EbookManager } from './admin/EbookManager';
 import { TerjemahanManager } from './admin/TerjemahanManager';
 import { KaryaManager } from './admin/KaryaManager';
 import { YouTubeManager } from './admin/YouTubeManager';
@@ -55,6 +57,7 @@ export function App() {
                   <Route index element={<HomePage />} />
                   <Route path="materi" element={<MateriListPage />} />
                   <Route path="materi/:slug" element={<MateriDetailPage />} />
+                  <Route path="ebook" element={<EbookListPage />} />
                   <Route path="terjemahan" element={<TerjemahanPage />} />
                   <Route path="karya" element={<KaryaPage />} />
                   <Route path="*" element={<NotFoundPage />} />
@@ -72,6 +75,7 @@ export function App() {
                   <Route path="materi" element={<MateriManager />} />
                   <Route path="materi/new" element={<MateriFormPage />} />
                   <Route path="materi/edit/:id" element={<MateriFormPage />} />
+                  <Route path="ebook" element={<EbookManager />} />
                   <Route path="komentar" element={<KomentarManager />} />
                   <Route path="kategori" element={<KategoriManager />} />
                   <Route path="terjemahan" element={<TerjemahanManager />} />

@@ -19,7 +19,7 @@ import {
   MessageSquare,
   HelpCircle,
   Mail,
-  Award,
+  Library,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useProfile } from '../hooks/useProfile';
@@ -62,6 +62,7 @@ export const AdminLayout: React.FC = () => {
     { label: 'Sertifikasi Google', href: '/admin/sertifikasi', icon: ShieldCheck },
     { label: 'Riwayat & Karir', href: '/admin/riwayat', icon: GraduationCap },
     { label: 'Materi PAI & Modul', href: '/admin/materi', icon: BookOpen },
+    { label: 'Pustaka E-Book', href: '/admin/ebook', icon: Library },
     {
       label: 'Moderasi Komentar',
       href: '/admin/komentar',

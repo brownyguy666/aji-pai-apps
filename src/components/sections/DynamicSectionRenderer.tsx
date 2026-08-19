@@ -4,6 +4,7 @@ import { HeroSection } from './HeroSection';
 import { SertifikasiSection } from './SertifikasiSection';
 import { StatistikSection } from './StatistikSection';
 import { MateriSection } from './MateriSection';
+import { EbookSection } from './EbookSection';
 import { YouTubeSection } from './YouTubeSection';
 import { TerjemahanSection } from './TerjemahanSection';
 import { KaryaSection } from './KaryaSection';
@@ -33,6 +34,8 @@ export const DynamicSectionRenderer: React.FC = () => {
         return <StatistikSection key="statistik" />;
       case 'materi':
         return <MateriSection key="materi" />;
+      case 'ebook':
+        return <EbookSection key="ebook" />;
       case 'youtube':
         return <YouTubeSection key="youtube" />;
       case 'terjemahan':

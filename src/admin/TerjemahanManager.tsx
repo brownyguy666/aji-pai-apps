@@ -46,10 +46,10 @@ export const TerjemahanManager: React.FC = () => {
     setEditingItem(item);
     setFormData({
       judul: item.judul,
-      bahasa_asal: item.bahasa_asal,
-      bahasa_tujuan: item.bahasa_tujuan,
+      bahasa_asal: item.bahasa_asal || item.bahasa_sumber || 'Bahasa Arab',
+      bahasa_tujuan: item.bahasa_tujuan || item.bahasa_target || 'Bahasa Indonesia',
       deskripsi: item.deskripsi || '',
-      link_file: item.link_file || '',
+      link_file: item.link_file || item.file_url || '',
       tahun: item.tahun,
       urutan: item.urutan,
     });

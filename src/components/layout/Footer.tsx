@@ -130,6 +130,11 @@ export const Footer: React.FC = () => {
                 </Link>
               </li>
               <li>
+                <Link to="/ebook" className="hover:text-brand-400 transition-colors">
+                  Pustaka E-Book & Kitab
+                </Link>
+              </li>
+              <li>
                 <Link to="/terjemahan" className="hover:text-brand-400 transition-colors">
                   Proyek Terjemahan Kitab Turats
                 </Link>

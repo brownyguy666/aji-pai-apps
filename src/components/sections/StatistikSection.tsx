@@ -1,5 +1,5 @@
 import React from 'react';
-import { BookOpen, Video, Award, Users, Palette, Clock } from 'lucide-react';
+import { BookOpen, Video, Award, Users, Palette, Clock, Library } from 'lucide-react';
 import { useStatistik } from '../../hooks/useStatistik';
 
 export const StatistikSection: React.FC = () => {
@@ -12,6 +12,13 @@ export const StatistikSection: React.FC = () => {
       suffix: '+',
       icon: BookOpen,
       color: 'from-emerald-600 to-teal-700',
+    },
+    {
+      label: 'E-Book & Kitab Turats',
+      value: stats?.totalEbook || 4,
+      suffix: '+',
+      icon: Library,
+      color: 'from-purple-600 to-indigo-700',
     },
     {
       label: 'Video Pembelajaran',
@@ -39,7 +46,7 @@ export const StatistikSection: React.FC = () => {
       value: stats?.totalGuruTerlatih || 350,
       suffix: '+',
       icon: Users,
-      color: 'from-purple-600 to-violet-700',
+      color: 'from-teal-600 to-emerald-700',
     },
   ];
 
@@ -57,23 +64,23 @@ export const StatistikSection: React.FC = () => {
           </h2>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
           {statItems.map((item, idx) => {
             const Icon = item.icon;
             return (
               <div
                 key={idx}
-                className="rounded-2xl bg-slate-800/80 border border-slate-700/60 p-5 flex flex-col items-center text-center space-y-3 hover:border-brand-500/50 transition-all group"
+                className="rounded-2xl bg-slate-800/80 border border-slate-700/60 p-4 sm:p-5 flex flex-col items-center text-center space-y-3 hover:border-brand-500/50 transition-all group"
               >
-                <div className={`p-3 rounded-xl bg-gradient-to-tr ${item.color} shadow-lg text-white group-hover:scale-110 transition-transform`}>
+                <div className={`p-2.5 sm:p-3 rounded-xl bg-gradient-to-tr ${item.color} shadow-lg text-white group-hover:scale-110 transition-transform`}>
                   <Icon className="w-5 h-5" aria-hidden="true" />
                 </div>
 
                 <div className="space-y-0.5">
-                  <div className="text-2xl sm:text-3xl font-black font-display tracking-tight text-white">
+                  <div className="text-xl sm:text-2xl lg:text-3xl font-black font-display tracking-tight text-white">
                     {isLoading ? '...' : `${item.value}${item.suffix}`}
                   </div>
-                  <div className="text-xs text-slate-300 font-medium">
+                  <div className="text-[11px] sm:text-xs text-slate-300 font-medium">
                     {item.label}
                   </div>
                 </div>
