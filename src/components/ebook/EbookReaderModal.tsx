@@ -19,6 +19,7 @@ import {
   Cloud,
   FileText,
   RotateCcw,
+  Zap,
 } from 'lucide-react';
 import { EBook } from '../../types/database';
 import { parseCloudEmbedUrl } from '../../lib/embedHelper';
@@ -45,6 +46,8 @@ export const EbookReaderModal: React.FC<EbookReaderModalProps> = ({
   const [currentLocation, setCurrentLocation] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
   const [loadingStatus, setLoadingStatus] = useState('Mengunduh struktur buku...');
+  const [downloadProgress, setDownloadProgress] = useState<number | null>(null);
+  const [downloadDetail, setDownloadDetail] = useState<string>('');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
 
@@ -76,25 +79,29 @@ export const EbookReaderModal: React.FC<EbookReaderModalProps> = ({
     }
   }, [isOpen, ebook, hasEpubFormat]);
 
-  // EPUB Reader Engine with Fetch Timeout & CORS Safety
+  // EPUB Reader Engine with Streaming Progress & Dynamic Timeout
   useEffect(() => {
     if (!isOpen || !ebook || viewMode !== 'epub') return;
 
     let isMounted = true;
     let abortController = new AbortController();
     setIsLoading(true);
-    setLoadingStatus('Mengunduh file buku digital...');
+    setLoadingStatus('Menghubungi Cloudflare R2...');
+    setDownloadProgress(null);
+    setDownloadDetail('');
     setErrorMsg(null);
 
-    // Realistic timeout: 25 seconds for large EPUBs
-    const timer = setTimeout(() => {
-      if (isMounted && isLoading) {
+    // Dynamic inactivity watchdog: only times out if NO bytes received for 30 seconds
+    let lastActivity = Date.now();
+    const watchdogInterval = setInterval(() => {
+      if (isMounted && isLoading && Date.now() - lastActivity > 30000) {
         setIsLoading(false);
+        clearInterval(watchdogInterval);
         setErrorMsg(
-          'Waktu memuat file EPUB habis (file berukuran besar atau URL belum dapat diakses). Anda dapat mencoba muat ulang atau membuka via Cloud Viewer.'
+          'Koneksi unduhan terhenti (file berukuran besar / batas koneksi). Anda dapat membuka langsung via Mode Cloud Viewer atau mengunduh filenya.'
         );
       }
-    }, 25000);
+    }, 2000);
 
     const initEpub = async () => {
       try {
@@ -118,8 +125,8 @@ export const EbookReaderModal: React.FC<EbookReaderModalProps> = ({
           return;
         }
 
-        // Try fetching ArrayBuffer first
-        setLoadingStatus('Mengunduh paket e-book dari Cloudflare R2 / Server...');
+        // Streaming byte download with live progress
+        setLoadingStatus('Mengunduh paket e-book...');
         let buffer: ArrayBuffer | null = null;
 
         try {
@@ -129,13 +136,55 @@ export const EbookReaderModal: React.FC<EbookReaderModalProps> = ({
           });
 
           if (!response.ok) {
-            throw new Error(`Server merespons status ${response.status}: File tidak ditemukan di R2.`);
+            throw new Error(`Server R2 merespons status ${response.status}: File tidak ditemukan.`);
           }
 
-          buffer = await response.arrayBuffer();
+          const contentLengthHeader = response.headers.get('content-length');
+          const totalBytes = contentLengthHeader ? parseInt(contentLengthHeader, 10) : 0;
+
+          if (response.body) {
+            const reader = response.body.getReader();
+            const chunks: Uint8Array[] = [];
+            let receivedBytes = 0;
+
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) break;
+              if (value) {
+                lastActivity = Date.now(); // update watchdog
+                chunks.push(value);
+                receivedBytes += value.length;
+
+                if (isMounted) {
+                  const receivedMb = (receivedBytes / (1024 * 1024)).toFixed(1);
+                  if (totalBytes > 0) {
+                    const pct = Math.min(99, Math.round((receivedBytes / totalBytes) * 100));
+                    const totalMb = (totalBytes / (1024 * 1024)).toFixed(1);
+                    setDownloadProgress(pct);
+                    setDownloadDetail(`${receivedMb} MB / ${totalMb} MB (${pct}%)`);
+                    setLoadingStatus(`Mengunduh file buku (${pct}%)...`);
+                  } else {
+                    setDownloadDetail(`${receivedMb} MB`);
+                    setLoadingStatus(`Mengunduh file buku (${receivedMb} MB)...`);
+                  }
+                }
+              }
+            }
+
+            // Concatenate all chunks
+            const allChunks = new Uint8Array(receivedBytes);
+            let position = 0;
+            for (const chunk of chunks) {
+              allChunks.set(chunk, position);
+              position += chunk.length;
+            }
+            buffer = allChunks.buffer;
+          } else {
+            buffer = await response.arrayBuffer();
+          }
         } catch (fetchErr: any) {
           if (fetchErr.name === 'AbortError') return;
-          console.warn('Fetch ArrayBuffer failed, attempting direct ePub URL instantiation:', fetchErr);
+          console.warn('Fetch ArrayBuffer streaming failed, attempting direct ePub URL instantiation:', fetchErr);
         }
 
         if (!isMounted || !viewerRef.current) return;
@@ -148,8 +197,9 @@ export const EbookReaderModal: React.FC<EbookReaderModalProps> = ({
         }
 
         setLoadingStatus('Membongkar bab dan merender tata letak buku...');
+        setDownloadProgress(100);
 
-        // Instantiate ePub from buffer or directly from URL
+        // Instantiate ePub from buffer or direct URL
         const book = buffer ? ePub(buffer) : ePub(epubUrl);
         bookRef.current = book;
 
@@ -195,16 +245,16 @@ export const EbookReaderModal: React.FC<EbookReaderModalProps> = ({
 
         if (isMounted) {
           setIsLoading(false);
-          clearTimeout(timer);
+          clearInterval(watchdogInterval);
         }
       } catch (err: any) {
         if (err.name === 'AbortError') return;
         console.error('EPUB reader error:', err);
         if (isMounted) {
           setIsLoading(false);
-          clearTimeout(timer);
+          clearInterval(watchdogInterval);
           setErrorMsg(
-            'Gagal merender file EPUB. Pastikan aturan CORS di Cloudflare R2 sudah di-save dan nama file di URL sesuai persis dengan nama file di R2.'
+            'Gagal memuat file EPUB secara penuh. Untuk file berukuran besar (> 50 MB), Anda dapat langsung membukanya di Mode Cloud Viewer atau mengunduh filenya.'
           );
         }
       }
@@ -214,7 +264,7 @@ export const EbookReaderModal: React.FC<EbookReaderModalProps> = ({
 
     return () => {
       isMounted = false;
-      clearTimeout(timer);
+      clearInterval(watchdogInterval);
       abortController.abort();
       if (bookRef.current) {
         try {
@@ -481,16 +531,43 @@ export const EbookReaderModal: React.FC<EbookReaderModalProps> = ({
             {viewMode === 'epub' ? (
               <>
                 {isLoading && (
-                  <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-inherit space-y-3 p-6 text-center">
-                    <RefreshCw className="w-9 h-9 animate-spin text-brand-500" />
-                    <div className="space-y-1">
+                  <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-inherit space-y-4 p-6 text-center max-w-sm mx-auto">
+                    <RefreshCw className="w-10 h-10 animate-spin text-brand-500" />
+                    <div className="space-y-1.5 w-full">
                       <p className="text-sm font-bold text-slate-800 dark:text-slate-200">
-                        Menyiapkan Buku Digital...
+                        Menyiapkan Buku Digital
                       </p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 animate-pulse">
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
                         {loadingStatus}
                       </p>
+
+                      {/* Download Progress Bar */}
+                      {downloadProgress !== null && (
+                        <div className="pt-2 space-y-1">
+                          <div className="w-full h-2 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-brand-500 transition-all duration-300 rounded-full"
+                              style={{ width: `${downloadProgress}%` }}
+                            />
+                          </div>
+                          {downloadDetail && (
+                            <p className="text-[11px] font-mono text-slate-400">
+                              {downloadDetail}
+                            </p>
+                          )}
+                        </div>
+                      )}
                     </div>
+
+                    {/* Quick Cloud Switch for impatient users with large files */}
+                    <button
+                      type="button"
+                      onClick={() => setViewMode('cloud')}
+                      className="text-[11px] text-brand-600 dark:text-brand-400 hover:underline pt-2 inline-flex items-center gap-1 font-semibold"
+                    >
+                      <Zap className="w-3 h-3 text-amber-500" />
+                      File besar? Klik untuk Buka Mode Cloud Instan
+                    </button>
                   </div>
                 )}
 
