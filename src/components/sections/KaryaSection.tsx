@@ -1,21 +1,20 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Palette, ExternalLink, Eye, ArrowRight, Sparkles } from 'lucide-react';
+import { Palette, ExternalLink, Eye, ArrowRight, Sparkles, Play } from 'lucide-react';
 import { useKarya } from '../../hooks/useKarya';
+import { Karya } from '../../types/database';
 import { Card } from '../ui/Card';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
 import { Modal } from '../ui/Modal';
+import { EmbedModalViewer } from '../ui/CloudEmbedViewer';
 
 export const KaryaSection: React.FC = () => {
   const { karyaList, isLoading } = useKarya();
   const [selectedCategory, setSelectedCategory] = useState<string>('Semua');
-  const [lightboxKarya, setLightboxKarya] = useState<{
-    gambar_url: string;
-    judul: string;
-    deskripsi?: string | null;
-  } | null>(null);
+  const [lightboxKarya, setLightboxKarya] = useState<Karya | null>(null);
+  const [embedKarya, setEmbedKarya] = useState<Karya | null>(null);
 
   const categories = ['Semua', ...Array.from(new Set(karyaList.map((k) => k.kategori)))];
 
@@ -26,34 +25,34 @@ export const KaryaSection: React.FC = () => {
   const previewList = filtered.slice(0, 4);
 
   return (
-    <section id="karya" className="py-16 md:py-20 bg-slate-100/50 dark:bg-slate-900/30 border-t border-slate-200/60 dark:border-slate-800/80 relative">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section id="karya" className="py-16 md:py-24 bg-slate-100/50 dark:bg-slate-900/30 border-t border-slate-200/60 dark:border-slate-800/80 relative">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
         
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div className="space-y-2 max-w-2xl">
             <div className="inline-flex items-center gap-1.5 text-xs font-bold text-teal-600 dark:text-teal-400 uppercase tracking-wider">
               <Palette className="w-4 h-4" />
               <span>Publikasi & Portofolio Kreatif</span>
             </div>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white">
-              Galeri Karya & Inovasi Pembelajaran
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 dark:text-white font-display">
+              Galeri Karya & Inovasi Digital
             </h2>
-            <p className="text-sm text-slate-600 dark:text-slate-400">
-              Koleksi infografis islami, e-book metodologi PAI abad 21, modul ajar kurikulum merdeka, dan media ajar kreatif digital.
+            <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400">
+              Koleksi infografis, e-book metodologi PAI, media Canva/Slides interaktif, modul ajar, dan publikasi digital lainnya.
             </p>
           </div>
 
           <Link to="/karya">
-            <Button variant="outline" size="sm" className="hidden sm:inline-flex shrink-0">
-              Lihat Semua Karya
+            <Button variant="secondary" size="sm" className="hidden sm:inline-flex shrink-0">
+              Lihat Semua Karya ({karyaList.length})
               <ArrowRight className="w-4 h-4 ml-1.5" />
             </Button>
           </Link>
         </div>
 
         {/* Category Filters */}
-        <div className="flex flex-wrap items-center gap-2 mb-8">
+        <div className="flex flex-wrap items-center gap-2">
           {categories.map((cat) => (
             <button
               key={cat}
@@ -88,11 +87,17 @@ export const KaryaSection: React.FC = () => {
                   exit={{ opacity: 0, scale: 0.95 }}
                   transition={{ duration: 0.25, delay: idx * 0.05 }}
                 >
-                  <Card hoverEffect className="overflow-hidden flex flex-col h-full group bg-white dark:bg-slate-900">
+                  <Card hoverEffect className="overflow-hidden flex flex-col h-full group bg-white dark:bg-slate-900 shadow-sm border">
                     {/* Image Box */}
                     <div
                       className="relative aspect-[4/3] overflow-hidden bg-slate-100 dark:bg-slate-800 cursor-pointer"
-                      onClick={() => setLightboxKarya(item)}
+                      onClick={() => {
+                        if (item.link_eksternal) {
+                          setEmbedKarya(item);
+                        } else {
+                          setLightboxKarya(item);
+                        }
+                      }}
                     >
                       <img
                         src={item.gambar_url}
@@ -101,8 +106,9 @@ export const KaryaSection: React.FC = () => {
                         loading="lazy"
                       />
                       <div className="absolute inset-0 bg-slate-950/20 group-hover:bg-slate-950/40 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
-                        <div className="p-2.5 rounded-full bg-white/90 text-slate-900 shadow-md">
-                          <Eye className="w-4 h-4" />
+                        <div className="p-2.5 rounded-full bg-white/95 text-slate-900 shadow-md flex items-center gap-1.5 text-xs font-bold px-3">
+                          <Eye className="w-3.5 h-3.5" />
+                          <span>{item.link_eksternal ? 'Pratinjau Interaktif' : 'Perbesar Gambar'}</span>
                         </div>
                       </div>
                       <div className="absolute top-3 left-3">
@@ -126,15 +132,23 @@ export const KaryaSection: React.FC = () => {
                       </div>
 
                       {item.link_eksternal && (
-                        <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex justify-end">
+                        <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                          <button
+                            type="button"
+                            onClick={() => setEmbedKarya(item)}
+                            className="inline-flex items-center gap-1 text-xs font-bold text-brand-600 dark:text-brand-400 hover:underline"
+                          >
+                            <span>Buka Embed</span>
+                            <Eye className="w-3.5 h-3.5" />
+                          </button>
                           <a
                             href={item.link_eksternal}
                             target="_blank"
                             rel="noreferrer"
-                            className="inline-flex items-center gap-1 text-xs font-semibold text-brand-600 dark:text-brand-400 hover:underline"
+                            className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                            title="Buka Tautan Luar"
                           >
-                            <span>Lihat Karya</span>
-                            <ExternalLink className="w-3 h-3" />
+                            <ExternalLink className="w-3.5 h-3.5" />
                           </a>
                         </div>
                       )}
@@ -148,7 +162,7 @@ export const KaryaSection: React.FC = () => {
 
       </div>
 
-      {/* Lightbox Modal */}
+      {/* Image Lightbox Modal */}
       <Modal
         isOpen={Boolean(lightboxKarya)}
         onClose={() => setLightboxKarya(null)}
@@ -168,6 +182,16 @@ export const KaryaSection: React.FC = () => {
           </div>
         )}
       </Modal>
+
+      {/* Cloud Embed Interactive Modal */}
+      {embedKarya && (
+        <EmbedModalViewer
+          isOpen={Boolean(embedKarya)}
+          onClose={() => setEmbedKarya(null)}
+          url={embedKarya.link_eksternal || ''}
+          title={embedKarya.judul}
+        />
+      )}
     </section>
   );
 };

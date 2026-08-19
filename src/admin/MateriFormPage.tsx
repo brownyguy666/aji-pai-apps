@@ -12,15 +12,21 @@ import {
   Layers,
   Paperclip,
   CheckCircle,
+  Cloud,
+  ExternalLink,
+  Sparkles,
 } from 'lucide-react';
 import { useMateri } from '../hooks/useMateri';
 import { useCategories } from '../hooks/useCategories';
 import { MateriPAI, MateriFile } from '../types/database';
 import { uploadImage, uploadMateriFile } from '../lib/supabase';
 import { slugify, formatBytes, getFileBadgeColor } from '../lib/utils';
+import { parseCloudEmbedUrl } from '../lib/embedHelper';
 import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
+import { Modal } from '../components/ui/Modal';
+import { EmbedModalViewer } from '../components/ui/CloudEmbedViewer';
 import { useToast } from '../components/ui/Toast';
 
 export const MateriFormPage: React.FC = () => {
@@ -50,6 +56,15 @@ export const MateriFormPage: React.FC = () => {
   const [uploadingFile, setUploadingFile] = useState(false);
   const [previewTab, setPreviewTab] = useState<'write' | 'preview'>('write');
 
+  // Cloud Link Attachment Modal State
+  const [cloudModalOpen, setCloudModalOpen] = useState(false);
+  const [cloudLinkUrl, setCloudLinkUrl] = useState('');
+  const [cloudLinkName, setCloudLinkName] = useState('');
+  const [cloudLinkType, setCloudLinkType] = useState('drive');
+
+  // Live Embed Viewer for any attached file
+  const [activeEmbedPreview, setActiveEmbedPreview] = useState<{ url: string; title: string } | null>(null);
+
   // Load existing data if edit mode
   useEffect(() => {
     if (isEdit && materiList.length > 0) {
@@ -68,7 +83,7 @@ export const MateriFormPage: React.FC = () => {
               nama_file: f.nama_file,
               file_url: f.file_url,
               tipe: f.tipe,
-              ukuran_bytes: f.ukuran_bytes,
+              ukuran_bytes: f.ukuran_bytes || undefined,
             }))
           );
         }
@@ -76,8 +91,7 @@ export const MateriFormPage: React.FC = () => {
     }
   }, [isEdit, id, materiList]);
 
-  // Auto-generate slug when title changes in new mode
-  const handleJudulChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
     setJudul(val);
     if (!isEdit) {
@@ -129,6 +143,39 @@ export const MateriFormPage: React.FC = () => {
     }
   };
 
+  const handleAddCloudLink = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!cloudLinkUrl.trim()) {
+      toastError('Tautan cloud storage wajib diisi.');
+      return;
+    }
+
+    const parsed = parseCloudEmbedUrl(cloudLinkUrl);
+    let autoType = cloudLinkType;
+    if (parsed.provider === 'gdrive') autoType = 'drive';
+    else if (parsed.provider === 'onedrive') autoType = 'onedrive';
+    else if (parsed.provider === 'canva') autoType = 'canva';
+    else if (parsed.provider === 'gslides') autoType = 'slide';
+    else if (parsed.provider === 'gdocs') autoType = 'doc';
+    else if (parsed.provider === 'pdf') autoType = 'pdf';
+
+    const defaultName = cloudLinkName.trim() || parsed.title || 'Dokumen Cloud Pembelajaran';
+
+    setFiles((prev) => [
+      ...prev,
+      {
+        nama_file: defaultName,
+        file_url: cloudLinkUrl.trim(),
+        tipe: autoType,
+      },
+    ]);
+
+    success('Tautan Cloud Storage berhasil ditambahkan!');
+    setCloudLinkUrl('');
+    setCloudLinkName('');
+    setCloudModalOpen(false);
+  };
+
   const handleRemoveFile = (index: number) => {
     setFiles((prev) => prev.filter((_, idx) => idx !== index));
   };
@@ -178,45 +225,48 @@ export const MateriFormPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 max-w-5xl">
-      {/* Header Bar */}
-      <div className="flex items-center justify-between">
-        <Link
-          to="/admin/materi"
-          className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-brand-600 transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Kembali ke Daftar Materi
-        </Link>
-
-        <h1 className="text-xl font-extrabold font-display text-slate-900 dark:text-white">
-          {isEdit ? 'Edit Materi PAI' : 'Tulis Materi & Modul Baru'}
-        </h1>
+    <div className="space-y-6 max-w-5xl mx-auto pb-12">
+      {/* Top Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <Link to="/admin/materi">
+            <button className="p-2 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800">
+              <ArrowLeft className="w-4 h-4" />
+            </button>
+          </Link>
+          <div>
+            <h1 className="text-2xl font-extrabold font-display text-slate-900 dark:text-white">
+              {isEdit ? 'Edit Materi PAI' : 'Tulis Modul / Artikel PAI Baru'}
+            </h1>
+            <p className="text-xs text-slate-500">
+              Isi materi pembelajaran terstruktur, upload lampiran PDF/PPT atau lampirkan link Google Drive/OneDrive.
+            </p>
+          </div>
+        </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      {/* Main Form */}
+      <form onSubmit={handleSubmit}>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           
-          {/* Main Column (8 cols): Content & Texts */}
+          {/* Main Content Column (8 cols) */}
           <div className="lg:col-span-8 space-y-6">
             
-            {/* Title & Slug */}
+            {/* Title & Metadata Card */}
             <Card className="p-6 space-y-4 bg-white dark:bg-slate-900">
               <Input
-                label="Judul Artikel / Modul Materi PAI"
+                label="Judul Materi / Modul Pembelajaran"
                 required
                 value={judul}
-                onChange={handleJudulChange}
-                placeholder="Contoh: Memahami Konsep Fastabiqul Khairat: Kajian Q.S. Al-Maidah: 48"
+                onChange={handleTitleChange}
+                placeholder="Contoh: Fikih Sujud: Panduan Lengkap Sujud Sahwi, Tilawah, dan Syukur (Kelas 7)"
               />
 
               <Input
-                label="Slug URL (SEO)"
-                required
+                label="Slug URL (Otomatis)"
                 value={slug}
-                onChange={(e) => setSlug(slugify(e.target.value))}
-                placeholder="memahami-konsep-fastabiqul-khairat"
-                helperText={`Tautan publik: /materi/${slug || 'slug-otomatis'}`}
+                onChange={(e) => setSlug(e.target.value)}
+                placeholder="fikih-sujud-sahwi-tilawah-syukur"
               />
 
               <div className="space-y-1.5">
@@ -248,10 +298,10 @@ export const MateriFormPage: React.FC = () => {
                     className={`px-3 py-1 rounded-lg transition-colors ${
                       previewTab === 'write'
                         ? 'bg-white dark:bg-slate-900 text-brand-600 dark:text-brand-400 shadow-xs'
-                        : 'text-slate-500'
+                        : 'text-slate-600 dark:text-slate-400'
                     }`}
                   >
-                    Tulis Editor
+                    Tulis Markdown
                   </button>
                   <button
                     type="button"
@@ -259,10 +309,10 @@ export const MateriFormPage: React.FC = () => {
                     className={`px-3 py-1 rounded-lg transition-colors ${
                       previewTab === 'preview'
                         ? 'bg-white dark:bg-slate-900 text-brand-600 dark:text-brand-400 shadow-xs'
-                        : 'text-slate-500'
+                        : 'text-slate-600 dark:text-slate-400'
                     }`}
                   >
-                    Pratinjau Live
+                    Pratinjau
                   </button>
                 </div>
               </div>
@@ -278,7 +328,7 @@ export const MateriFormPage: React.FC = () => {
                     className="block w-full font-mono text-xs sm:text-sm rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
                   />
                   <p className="text-[11px] text-slate-400">
-                    Mendukung format Markdown standar: # untuk Heading 1, ## Heading 2, &gt; untuk Quote Ayat, - untuk List.
+                    Mendukung format Markdown: # Heading 1, ## Heading 2, &gt; Quote Ayat/Hadits, - List poin.
                   </p>
                 </div>
               ) : (
@@ -297,35 +347,49 @@ export const MateriFormPage: React.FC = () => {
               )}
             </Card>
 
-            {/* File Attachments Uploader */}
+            {/* File Attachments & Cloud Storage Links */}
             <Card className="p-6 space-y-4 bg-white dark:bg-slate-900">
-              <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3 gap-2">
                 <div className="flex items-center gap-2">
                   <Paperclip className="w-4 h-4 text-brand-600" />
                   <h3 className="font-display font-bold text-sm text-slate-900 dark:text-white">
-                    File Lampiran untuk Diunduh Siswa (PDF, PPT, Word, Excel)
+                    File Lampiran & Tautan Cloud Storage ({files.length})
                   </h3>
                 </div>
 
-                <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-brand-50 dark:bg-brand-950 text-brand-700 dark:text-brand-300 hover:bg-brand-100 cursor-pointer transition-colors">
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>{uploadingFile ? 'Mengunggah...' : 'Tambah File Lampiran'}</span>
-                  <input
-                    type="file"
-                    multiple
-                    accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.zip"
-                    onChange={handleAttachmentUpload}
-                    className="sr-only"
-                    disabled={uploadingFile}
-                  />
-                </label>
+                {/* Actions: Add Cloud Link or Upload File */}
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCloudModalOpen(true)}
+                    className="text-xs"
+                  >
+                    <Cloud className="w-3.5 h-3.5 mr-1 text-blue-500" />
+                    + Link Google Drive / OneDrive
+                  </Button>
+
+                  <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-brand-50 dark:bg-brand-950 text-brand-700 dark:text-brand-300 hover:bg-brand-100 cursor-pointer transition-colors">
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>{uploadingFile ? 'Mengunggah...' : 'Upload File'}</span>
+                    <input
+                      type="file"
+                      multiple
+                      accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.zip"
+                      onChange={handleAttachmentUpload}
+                      className="sr-only"
+                      disabled={uploadingFile}
+                    />
+                  </label>
+                </div>
               </div>
 
               {files.length === 0 ? (
                 <div className="text-center py-6 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-xl space-y-1">
-                  <p className="text-xs text-slate-500">Belum ada file lampiran yang diunggah.</p>
+                  <p className="text-xs text-slate-500">Belum ada file atau link cloud yang dilampirkan.</p>
                   <p className="text-[11px] text-slate-400">
-                    Siswa dapat mengunduh modul ajar, lembar kerja (LKPD), atau slide presentasi yang Anda lampirkan di sini.
+                    Anda dapat mengunggah file lokal (PDF/PPT/Word) atau menempelkan tautan dari <strong>Google Drive, OneDrive, Canva</strong> untuk di-embed langsung.
                   </p>
                 </div>
               ) : (
@@ -346,18 +410,31 @@ export const MateriFormPage: React.FC = () => {
                               {file.tipe}
                             </span>
                             {file.ukuran_bytes ? <span>{formatBytes(file.ukuran_bytes)}</span> : null}
+                            <span className="truncate text-slate-400">{file.file_url}</span>
                           </div>
                         </div>
                       </div>
 
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveFile(idx)}
-                        className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-lg"
-                        title="Hapus file"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      <div className="flex items-center gap-1 shrink-0">
+                        {/* Test Embed Preview Button */}
+                        <button
+                          type="button"
+                          onClick={() => setActiveEmbedPreview({ url: file.file_url, title: file.nama_file })}
+                          className="p-1.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/50 rounded-lg"
+                          title="Cek Pratinjau Embed"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveFile(idx)}
+                          className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-lg"
+                          title="Hapus file"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -405,13 +482,13 @@ export const MateriFormPage: React.FC = () => {
               <div className="flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
                 <Layers className="w-4 h-4 text-brand-600" />
                 <h3 className="font-display font-bold text-sm text-slate-900 dark:text-white">
-                  Pilih Kategori Bertingkat
+                  Pilih Kategori Elemen PAI
                 </h3>
               </div>
 
               <div className="space-y-1.5">
                 <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
-                  Kategori Materi
+                  Kategori Materi (Fase D)
                 </label>
                 <select
                   value={kategoriId}
@@ -454,32 +531,44 @@ export const MateriFormPage: React.FC = () => {
               </h3>
 
               <div className="space-y-3">
-                {gambarCoverUrl ? (
-                  <div className="relative aspect-[16/9] rounded-xl overflow-hidden bg-slate-900 border border-slate-200 dark:border-slate-800">
+                {gambarCoverUrl && (
+                  <div className="aspect-[16/9] rounded-xl overflow-hidden bg-slate-950 border border-slate-200 dark:border-slate-800 relative">
                     <img
                       src={gambarCoverUrl}
                       alt="Cover Preview"
                       className="w-full h-full object-cover"
                     />
-                  </div>
-                ) : (
-                  <div className="aspect-[16/9] rounded-xl bg-slate-100 dark:bg-slate-800 flex flex-col items-center justify-center text-slate-400 text-xs gap-1 border-2 border-dashed border-slate-200 dark:border-slate-700">
-                    <Camera className="w-6 h-6" />
-                    <span>Belum ada gambar cover</span>
+                    <button
+                      type="button"
+                      onClick={() => setGambarCoverUrl('')}
+                      className="absolute top-2 right-2 p-1.5 bg-red-600 text-white rounded-lg shadow-sm"
+                      title="Hapus cover"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
                   </div>
                 )}
 
-                <label className="inline-flex items-center justify-center gap-1.5 w-full px-3 py-2 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 cursor-pointer transition-colors">
-                  <Upload className="w-3.5 h-3.5" />
-                  <span>{uploadingCover ? 'Mengunggah...' : 'Pilih File Cover'}</span>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleCoverUpload}
-                    className="sr-only"
-                    disabled={uploadingCover}
-                  />
-                </label>
+                <Input
+                  label="Tautan Gambar Cover (URL)"
+                  value={gambarCoverUrl}
+                  onChange={(e) => setGambarCoverUrl(e.target.value)}
+                  placeholder="https://images.unsplash.com/..."
+                />
+
+                <div className="text-center">
+                  <label className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 cursor-pointer transition-colors">
+                    <Camera className="w-4 h-4 text-brand-600" />
+                    <span>{uploadingCover ? 'Mengunggah...' : 'Upload dari Perangkat'}</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleCoverUpload}
+                      className="sr-only"
+                      disabled={uploadingCover}
+                    />
+                  </label>
+                </div>
               </div>
             </Card>
 
@@ -487,6 +576,70 @@ export const MateriFormPage: React.FC = () => {
 
         </div>
       </form>
+
+      {/* Cloud Link Attachment Modal */}
+      <Modal
+        isOpen={cloudModalOpen}
+        onClose={() => setCloudModalOpen(false)}
+        title="Lampirkan Tautan Cloud Storage / Embed"
+        description="Tempelkan link dari Google Drive, Microsoft OneDrive, Canva, atau Google Docs/Slides/PDF."
+        size="md"
+      >
+        <form onSubmit={handleAddCloudLink} className="space-y-4">
+          <Input
+            label="Nama Dokumen / File"
+            required
+            value={cloudLinkName}
+            onChange={(e) => setCloudLinkName(e.target.value)}
+            placeholder="Contoh: Modul Ajar Fikih Kelas 7 (Google Drive)"
+          />
+
+          <Input
+            label="Tautan URL / Embed Code"
+            required
+            value={cloudLinkUrl}
+            onChange={(e) => setCloudLinkUrl(e.target.value)}
+            placeholder="https://drive.google.com/file/d/... atau OneDrive / Canva"
+            helperText="Pastikan akses link Google Drive / OneDrive diset ke 'Siapa saja yang memiliki link (Anyone with link)'"
+          />
+
+          <div className="space-y-1.5">
+            <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
+              Tipe Layanan / Ekstensi
+            </label>
+            <select
+              value={cloudLinkType}
+              onChange={(e) => setCloudLinkType(e.target.value)}
+              className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3.5 py-2 text-sm"
+            >
+              <option value="drive">Google Drive / Docs / Slides</option>
+              <option value="onedrive">Microsoft OneDrive / Office 365</option>
+              <option value="canva">Canva Presentation / Design</option>
+              <option value="pdf">Dokumen PDF Online</option>
+              <option value="link">Tautan Web / Lainnya</option>
+            </select>
+          </div>
+
+          <div className="flex justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
+            <Button type="button" variant="ghost" onClick={() => setCloudModalOpen(false)}>
+              Batal
+            </Button>
+            <Button type="submit" variant="primary">
+              Tambahkan Tautan
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Embed Test Modal Preview */}
+      {activeEmbedPreview && (
+        <EmbedModalViewer
+          isOpen={Boolean(activeEmbedPreview)}
+          onClose={() => setActiveEmbedPreview(null)}
+          url={activeEmbedPreview.url}
+          title={activeEmbedPreview.title}
+        />
+      )}
     </div>
   );
 };

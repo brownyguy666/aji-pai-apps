@@ -1,38 +1,41 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Languages, ArrowRight, BookOpen, Download, ExternalLink, Calendar } from 'lucide-react';
+import { Languages, ArrowRight, BookOpen, Download, ExternalLink, Calendar, Eye } from 'lucide-react';
 import { useTerjemahan } from '../../hooks/useTerjemahan';
+import { ProyekTerjemahan } from '../../types/database';
 import { Card } from '../ui/Card';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
+import { EmbedModalViewer } from '../ui/CloudEmbedViewer';
 
 export const TerjemahanSection: React.FC = () => {
   const { terjemahanList, isLoading } = useTerjemahan();
+  const [activePreviewItem, setActivePreviewItem] = useState<ProyekTerjemahan | null>(null);
   const previewList = terjemahanList.slice(0, 4);
 
   return (
-    <section id="terjemahan" className="py-16 md:py-20 relative">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section id="terjemahan" className="py-16 md:py-24 relative">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
         
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-4">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div className="space-y-2 max-w-2xl">
             <div className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider">
               <Languages className="w-4 h-4" />
               <span>Khazanah Turats & Penerjemahan</span>
             </div>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white">
-              Daftar Proyek Terjemahan Kitab
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 dark:text-white font-display">
+              Proyek Terjemahan Kitab & Naskah
             </h2>
-            <p className="text-sm text-slate-600 dark:text-slate-400">
-              Dokumentasi proyek alih bahasa karya ulama klasik (kitab kuning) ke dalam Bahasa Indonesia dengan anotasi bahasa kontemporer yang mudah dipahami.
+            <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400">
+              Dokumentasi alih bahasa karya ulama klasik (turats islami) ke dalam Bahasa Indonesia dengan syarah kontemporer dan akses baca digital.
             </p>
           </div>
 
           <Link to="/terjemahan">
-            <Button variant="outline" size="sm" className="hidden sm:inline-flex shrink-0">
-              Lihat Semua Terjemahan
+            <Button variant="secondary" size="sm" className="hidden sm:inline-flex shrink-0">
+              Lihat Semua Terjemahan ({terjemahanList.length})
               <ArrowRight className="w-4 h-4 ml-1.5" />
             </Button>
           </Link>
@@ -42,7 +45,7 @@ export const TerjemahanSection: React.FC = () => {
         {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {[1, 2].map((n) => (
-              <div key={n} className="h-44 rounded-2xl bg-slate-200 dark:bg-slate-800 animate-pulse" />
+              <div key={n} className="h-48 rounded-2xl bg-slate-200 dark:bg-slate-800 animate-pulse" />
             ))}
           </div>
         ) : (
@@ -55,7 +58,7 @@ export const TerjemahanSection: React.FC = () => {
                 viewport={{ once: true }}
                 transition={{ duration: 0.3, delay: idx * 0.08 }}
               >
-                <Card hoverEffect className="p-6 h-full flex flex-col justify-between space-y-4 bg-white dark:bg-slate-900">
+                <Card hoverEffect className="p-6 h-full flex flex-col justify-between space-y-4 bg-white dark:bg-slate-900 border shadow-sm">
                   <div className="space-y-3">
                     {/* Language & Year Badges */}
                     <div className="flex flex-wrap items-center justify-between gap-2">
@@ -65,8 +68,8 @@ export const TerjemahanSection: React.FC = () => {
                         <span>{item.bahasa_tujuan}</span>
                       </div>
                       <span className="text-xs text-slate-400 flex items-center gap-1 font-medium">
-                        <Calendar className="w-3 h-3" />
-                        {item.tahun}
+                        <Calendar className="w-3.5 h-3.5" />
+                        Tahun {item.tahun}
                       </span>
                     </div>
 
@@ -83,21 +86,31 @@ export const TerjemahanSection: React.FC = () => {
 
                   {/* Actions */}
                   <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
-                    <span className="text-xs text-brand-600 dark:text-brand-400 font-medium">
-                      Turats & Terjemah
+                    <span className="text-xs text-brand-600 dark:text-brand-400 font-semibold">
+                      Turats & Syarah
                     </span>
                     {item.link_file ? (
-                      <a
-                        href={item.link_file}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-brand-50 text-brand-700 hover:bg-brand-100 dark:bg-brand-950/50 dark:text-brand-300 transition-colors"
-                      >
-                        <ExternalLink className="w-3.5 h-3.5" />
-                        Akses File / Buku
-                      </a>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setActivePreviewItem(item)}
+                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold bg-brand-50 hover:bg-brand-600 text-brand-700 hover:text-white dark:bg-brand-950/50 dark:text-brand-300 transition-colors shadow-sm"
+                        >
+                          <Eye className="w-3.5 h-3.5" />
+                          <span>Baca Online</span>
+                        </button>
+                        <a
+                          href={item.link_file}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                          title="Buka Tautan Asli"
+                        >
+                          <ExternalLink className="w-3.5 h-3.5" />
+                        </a>
+                      </div>
                     ) : (
-                      <span className="text-xs text-slate-400 italic">Arsip Fisik</span>
+                      <span className="text-xs text-slate-400 italic">Arsip Naskah</span>
                     )}
                   </div>
                 </Card>
@@ -107,6 +120,16 @@ export const TerjemahanSection: React.FC = () => {
         )}
 
       </div>
+
+      {/* Embed Modal Viewer */}
+      {activePreviewItem && (
+        <EmbedModalViewer
+          isOpen={Boolean(activePreviewItem)}
+          onClose={() => setActivePreviewItem(null)}
+          url={activePreviewItem.link_file || ''}
+          title={activePreviewItem.judul}
+        />
+      )}
     </section>
   );
 };
