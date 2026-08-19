@@ -83,8 +83,34 @@ export const useFAQ = () => {
         return current.find((c) => c.id === id);
       }
 
-      // If seed item being updated, insert to Supabase
+      // If seed item being updated on an unseeded table, seed ALL items with this one updated
       if (!isUUID(id)) {
+        const existingDB = await supabase.from('faq').select('id');
+        if (!existingDB.data || existingDB.data.length === 0) {
+          const allToInsert = initialFAQ.map((f) => {
+            if (f.id === id) {
+              return {
+                pertanyaan: updates.pertanyaan || f.pertanyaan,
+                jawaban: updates.jawaban || f.jawaban,
+                kategori: updates.kategori || f.kategori,
+                urutan: updates.urutan !== undefined ? updates.urutan : f.urutan || 0,
+                is_active: updates.is_active !== undefined ? updates.is_active : f.is_active ?? true,
+              };
+            }
+            return {
+              pertanyaan: f.pertanyaan,
+              jawaban: f.jawaban,
+              kategori: f.kategori,
+              urutan: f.urutan,
+              is_active: f.is_active,
+            };
+          });
+
+          const { data, error } = await supabase.from('faq').insert(allToInsert).select();
+          if (error) throw error;
+          return data?.[0] as FAQ;
+        }
+
         const existing = faqList.find((f) => f.id === id);
         const toInsert = {
           pertanyaan: updates.pertanyaan || existing?.pertanyaan || '',

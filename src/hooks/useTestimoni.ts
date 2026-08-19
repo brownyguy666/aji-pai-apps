@@ -106,8 +106,40 @@ export const useTestimoni = (options?: { status?: 'approved' | 'pending' | 'reje
         return current.find((c) => c.id === id);
       }
 
-      // If seed item being updated, insert to Supabase
+      // If seed item being updated on an unseeded table, insert ALL seed items to prevent others disappearing
       if (!isUUID(id)) {
+        const existingDB = await supabase.from('testimoni').select('id');
+        if (!existingDB.data || existingDB.data.length === 0) {
+          // Seed all items, with this one updated
+          const allToInsert = initialTestimoni.map((t) => {
+            if (t.id === id) {
+              return {
+                nama: updates.nama || t.nama,
+                peran_instansi: updates.peran_instansi || t.peran_instansi,
+                konten: updates.konten || t.konten,
+                foto_url: updates.foto_url !== undefined ? updates.foto_url : t.foto_url || null,
+                status: updates.status || t.status || 'approved',
+                rating: updates.rating !== undefined ? updates.rating : t.rating || 5,
+                urutan: updates.urutan !== undefined ? updates.urutan : t.urutan || 0,
+              };
+            }
+            return {
+              nama: t.nama,
+              peran_instansi: t.peran_instansi,
+              konten: t.konten,
+              foto_url: t.foto_url || null,
+              status: t.status,
+              rating: t.rating || 5,
+              urutan: t.urutan || 0,
+            };
+          });
+
+          const { data, error } = await supabase.from('testimoni').insert(allToInsert).select();
+          if (error) throw error;
+          return data?.[0] as Testimoni;
+        }
+
+        // Otherwise insert just this item
         const existing = testimoniList.find((t) => t.id === id);
         const toInsert = {
           nama: updates.nama || existing?.nama || '',

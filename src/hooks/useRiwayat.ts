@@ -124,8 +124,48 @@ export const useRiwayat = (options?: {
         return current.find((c) => c.id === id);
       }
 
-      // If item is a seed item (not a valid UUID in Supabase yet), insert it as a new persistent row
+      // If seed item being updated on an unseeded table, seed ALL items with this one updated to prevent disappearing
       if (!isUUID(id)) {
+        const existingDB = await supabase.from('riwayat').select('id');
+        if (!existingDB.data || existingDB.data.length === 0) {
+          const allToInsert = initialRiwayat.map((r) => {
+            if (r.id === id) {
+              return {
+                judul: updates.judul || r.judul,
+                instansi_organisasi: updates.instansi_organisasi || r.instansi_organisasi,
+                jenis: updates.jenis || r.jenis,
+                tahun_mulai: updates.tahun_mulai || r.tahun_mulai,
+                tahun_selesai: updates.tahun_selesai !== undefined ? updates.tahun_selesai : r.tahun_selesai,
+                deskripsi: updates.deskripsi !== undefined ? updates.deskripsi : r.deskripsi,
+                link_verifikasi: updates.link_verifikasi !== undefined ? updates.link_verifikasi : r.link_verifikasi,
+                badge_url: updates.badge_url !== undefined ? updates.badge_url : r.badge_url,
+                certificate_url: updates.certificate_url !== undefined ? updates.certificate_url : r.certificate_url,
+                accredible_id: updates.accredible_id !== undefined ? updates.accredible_id : r.accredible_id,
+                urutan: updates.urutan !== undefined ? updates.urutan : r.urutan || 0,
+                is_featured: updates.is_featured !== undefined ? updates.is_featured : true,
+              };
+            }
+            return {
+              judul: r.judul,
+              instansi_organisasi: r.instansi_organisasi,
+              jenis: r.jenis,
+              tahun_mulai: r.tahun_mulai,
+              tahun_selesai: r.tahun_selesai,
+              deskripsi: r.deskripsi,
+              link_verifikasi: r.link_verifikasi,
+              badge_url: r.badge_url,
+              certificate_url: r.certificate_url,
+              accredible_id: r.accredible_id,
+              urutan: r.urutan,
+              is_featured: r.is_featured,
+            };
+          });
+
+          const { data, error } = await supabase.from('riwayat').insert(allToInsert).select();
+          if (error) throw error;
+          return data?.[0] as Riwayat;
+        }
+
         const existing = riwayatList.find((r) => r.id === id);
         const toInsert = {
           judul: updates.judul || existing?.judul || '',

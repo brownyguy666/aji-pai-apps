@@ -99,7 +99,7 @@ DROP POLICY IF EXISTS "Admin can manage materi_tag" ON public.materi_tag;
 CREATE POLICY "Public can read materi_tag" ON public.materi_tag FOR SELECT USING (true);
 CREATE POLICY "Admin can manage materi_tag" ON public.materi_tag FOR ALL TO authenticated USING (true) WITH CHECK (true);
 
--- Komentar policies: Publik boleh insert komentar baru (status default pending) & baca yg approved
+-- Komentar policies
 DROP POLICY IF EXISTS "Public can read approved comments" ON public.komentar;
 DROP POLICY IF EXISTS "Public can insert comments" ON public.komentar;
 DROP POLICY IF EXISTS "Admin can manage comments" ON public.komentar;
@@ -107,7 +107,7 @@ CREATE POLICY "Public can read approved comments" ON public.komentar FOR SELECT 
 CREATE POLICY "Public can insert comments" ON public.komentar FOR INSERT WITH CHECK (status = 'pending');
 CREATE POLICY "Admin can manage comments" ON public.komentar FOR ALL TO authenticated USING (true) WITH CHECK (true);
 
--- Subscriber policies: Publik boleh insert email newsletter, hanya Admin yg boleh select/kelola
+-- Subscriber policies
 DROP POLICY IF EXISTS "Public can subscribe" ON public.subscriber;
 DROP POLICY IF EXISTS "Admin can view and manage subscribers" ON public.subscriber;
 CREATE POLICY "Public can subscribe" ON public.subscriber FOR INSERT WITH CHECK (true);
@@ -119,7 +119,7 @@ DROP POLICY IF EXISTS "Admin can manage riwayat" ON public.riwayat;
 CREATE POLICY "Public can read riwayat" ON public.riwayat FOR SELECT USING (true);
 CREATE POLICY "Admin can manage riwayat" ON public.riwayat FOR ALL TO authenticated USING (true) WITH CHECK (true);
 
--- Testimoni policies: Publik boleh submit testimoni baru & baca yg approved
+-- Testimoni policies
 DROP POLICY IF EXISTS "Public can read approved testimoni" ON public.testimoni;
 DROP POLICY IF EXISTS "Public can submit testimoni" ON public.testimoni;
 DROP POLICY IF EXISTS "Admin can manage testimoni" ON public.testimoni;
@@ -145,3 +145,34 @@ ON CONFLICT (key) DO UPDATE SET is_active = true;
 CREATE INDEX IF NOT EXISTS idx_materi_fts ON public.materi_pai USING gin(to_tsvector('indonesian', coalesce(judul, '') || ' ' || coalesce(deskripsi_singkat, '') || ' ' || coalesce(konten, '')));
 CREATE INDEX IF NOT EXISTS idx_terjemahan_fts ON public.proyek_terjemahan USING gin(to_tsvector('indonesian', coalesce(judul, '') || ' ' || coalesce(deskripsi, '')));
 CREATE INDEX IF NOT EXISTS idx_karya_fts ON public.karya USING gin(to_tsvector('indonesian', coalesce(judul, '') || ' ' || coalesce(deskripsi, '')));
+
+-- 10. INSERT INITIAL SEED DATA (RIWAYAT, TESTIMONI, FAQ, TAGS)
+INSERT INTO public.tags (nama, slug) VALUES
+  ('Al-Qur''an Hadis', 'al-quran-hadis'),
+  ('Akidah Akhlak', 'akidah-akhlak'),
+  ('Fikih Ibadah', 'fikih-ibadah'),
+  ('Sejarah Kebudayaan Islam', 'sejarah-kebudayaan-islam'),
+  ('Modul Ajar', 'modul-ajar'),
+  ('Kurikulum Merdeka', 'kurikulum-merdeka'),
+  ('Fase D (SMP)', 'fase-d'),
+  ('Media Interaktif', 'media-interaktif')
+ON CONFLICT (slug) DO NOTHING;
+
+INSERT INTO public.testimoni (nama, peran_instansi, konten, rating, status, urutan) VALUES
+  ('Ahmad Fauzi, M.Pd.', 'Guru PAI & Pengurus MGMP', 'Pak Aji adalah sosok guru inspiratif yang berhasil mendigitalisasi pembelajaran PAI. Modul ajar dan materi interaktif yang beliau rancang sangat membantu rekan guru di MGMP.', 5, 'approved', 1),
+  ('Nabila Az-Zahra', 'Alumni Siswa SMPN 2 Glagah', 'Belajar materi fikih dan sejarah Islam bersama Pak Aji jadi sangat menyenangkan karena selalu ada animasi, kuis Canva interaktif, dan slide yang mudah dipahami.', 5, 'approved', 2),
+  ('Ustadz Muhammad Ridwan', 'Pengasuh Majlis Taklim & Peneliti Naskah', 'Akurasi terjemahan kitab Matan Abu Syuja'' yang disusun Pak Aji sangat teliti, dilengkapi ta''liq dalil yang kontekstual bagi generasi muda.', 5, 'approved', 3);
+
+INSERT INTO public.faq (pertanyaan, jawaban, kategori, urutan, is_active) VALUES
+  ('Apakah semua modul ajar dan slide PAI di website ini gratis untuk diunduh?', 'Ya, seluruh modul ajar Kurikulum Merdeka (Fase D), LKPD, lembar kerja, dan slide presentasi Google Slides/Canva dapat diunduh dan digunakan secara bebas dan gratis untuk keperluan pembelajaran di sekolah maupun madrasah.', 'Materi & Unduhan', 1, true),
+  ('Bagaimana cara membuka dokumen Google Drive atau OneDrive yang dilampirkan?', 'Anda cukup mengklik tombol "Pratinjau Dokumen / Baca Online" pada setiap file lampiran artikel. Dokumen akan langsung terbuka dalam penampil dokumen interaktif (embed viewer) tanpa perlu keluar dari website.', 'Teknis & Akses', 2, true),
+  ('Apakah Pak Aji bersedia menjadi narasumber pelatihan guru atau workshop digitalisasi PAI?', 'Tentu. Anda dapat menghubungi saya melalui formulir kontak di bagian bawah website ini atau melalui nomor WhatsApp resmi yang tertera untuk mendiskusikan agenda seminar/workshop.', 'Kolaborasi & Undangan', 3, true),
+  ('Bagaimana cara memverifikasi sertifikasi resmi Google for Education Pak Aji?', 'Setiap sertifikasi dilengkapi tautan verifikasi resmi ke platform global Accredible Google. Klik tombol "Verifikasi di Accredible" pada section Sertifikasi untuk melihat rincian tanggal penerbitan dan nomor ID sertifikat asli.', 'Kredensial', 4, true);
+
+INSERT INTO public.riwayat (judul, instansi_organisasi, jenis, tahun_mulai, tahun_selesai, deskripsi, urutan, is_featured) VALUES
+  ('Sarjana Pendidikan Agama Islam (S.Pd)', 'Institut Agama Islam (IAI) Ibrahimy Genteng / Fakultas Tarbiyah', 'pendidikan', 2014, 2018, 'Lulus dengan fokus kajian metodologi pengajaran fikih dan integrasi literasi kitab kuning dalam pendidikan madrasah/sekolah.', 1, true),
+  ('Program Pendidikan Profesi Guru (PPG) PAI', 'Kementerian Agama RI & LPTK Terakreditasi', 'pendidikan', 2022, 2023, 'Memperoleh Sertifikat Pendidik Profesional Guru (Gr.) bidang Pendidikan Agama Islam dengan predikat sangat memuaskan.', 2, true),
+  ('Pengurus Musyawarah Guru Mata Pelajaran (MGMP) PAI SMP', 'MGMP PAI SMP Kabupaten Banyuwangi', 'organisasi', 2020, NULL, 'Aktif dalam pengembangan perangkat Kurikulum Merdeka (Fase D), pembuatan modul ajar digital, dan bank soal terstandar.', 3, true),
+  ('Anggota Asosiasi Guru Pendidikan Agama Islam Indonesia (AGPAII)', 'DPD AGPAII Kabupaten Banyuwangi', 'organisasi', 2019, NULL, 'Berpartisipasi aktif dalam forum riset pendidikan keagamaan islam dan seminar nasional penguatan moderasi beragama.', 4, true),
+  ('Guru Pendidikan Agama Islam (PAI) & Budi Pekerti', 'SMP Negeri 2 Glagah Banyuwangi', 'pengalaman', 2019, NULL, 'Mengampu mata pelajaran PAI Fase D (Kelas 7, 8, 9), pembina ekstrakurikuler keagamaan (Tahfidz & Hadrah), serta tim IT digitalisasi pembelajaran.', 5, true),
+  ('Guru Pengajar & Fasilitator Media Pembelajaran Digital', 'Komunitas Guru Berbagi & MGMP PAI', 'pengalaman', 2021, NULL, 'Memproduksi materi video edukasi visual, pembahasan soal OSN/OSNK, dan kajian sejarah peradaban Islam.', 6, true);
