@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { HelmetProvider } from 'react-helmet-async';
 import { AuthProvider } from './context/AuthContext';
+import { ThemeAccentProvider } from './context/ThemeAccentContext';
 import { ToastProvider } from './components/ui/Toast';
 
 // Build Version 0.1.0 - EPUB Streaming Reader & Smart Metadata Extractor
@@ -50,8 +51,9 @@ export function App() {
     <HelmetProvider>
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
-          <ToastProvider>
-            <BrowserRouter>
+          <ThemeAccentProvider>
+            <ToastProvider>
+              <BrowserRouter>
               <Routes>
                 {/* Public Website Routes */}
                 <Route path="/" element={<Layout />}>
@@ -93,7 +95,8 @@ export function App() {
               </Routes>
             </BrowserRouter>
           </ToastProvider>
-        </AuthProvider>
+        </ThemeAccentProvider>
+      </AuthProvider>
       </QueryClientProvider>
     </HelmetProvider>
   );
