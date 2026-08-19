@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
   GraduationCap,
   Users,
@@ -10,6 +11,8 @@ import {
   ExternalLink,
   Calendar,
   CheckCircle,
+  ShieldCheck,
+  Sparkles,
 } from 'lucide-react';
 import { useRiwayat } from '../hooks/useRiwayat';
 import { Riwayat } from '../types/database';
@@ -22,7 +25,7 @@ import { useToast } from '../components/ui/Toast';
 
 export const RiwayatManager: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'all' | 'pendidikan' | 'organisasi' | 'pengalaman' | 'sertifikasi'>('all');
-  const { riwayatList, createRiwayat, updateRiwayat, deleteRiwayat, isLoading } = useRiwayat({
+  const { riwayatList, createRiwayat, updateRiwayat, deleteRiwayat, seedRiwayat, isSeeding, isLoading } = useRiwayat({
     jenis: activeTab,
   });
   const { success, error: toastError } = useToast();
@@ -120,6 +123,15 @@ export const RiwayatManager: React.FC = () => {
     }
   };
 
+  const handleSeed = async () => {
+    try {
+      await seedRiwayat();
+      success('Rekam jejak awal berhasil disimpan ke Supabase!');
+    } catch {
+      toastError('Gagal menyimpan data awal.');
+    }
+  };
+
   const handleDelete = async (id: string) => {
     if (!window.confirm('Yakin ingin menghapus item riwayat ini?')) return;
     try {
@@ -132,6 +144,30 @@ export const RiwayatManager: React.FC = () => {
 
   return (
     <div className="space-y-6 max-w-5xl">
+      {/* Google Certs Promo / Quick Switch Banner */}
+      <div className="p-4 rounded-2xl bg-gradient-to-r from-blue-900/60 via-slate-900 to-slate-950 border border-blue-500/40 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-md">
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 rounded-xl bg-blue-500/20 text-blue-400">
+            <ShieldCheck className="w-5 h-5" />
+          </div>
+          <div>
+            <h3 className="font-display font-bold text-sm text-white">
+              Ingin Mengatur Lencana & Sertifikat Resmi Google Accredible?
+            </h3>
+            <p className="text-xs text-slate-300">
+              Kelola preview gambar sertifikat Google Educator L1, Gemini AI, dan verifikasi ID di menu Sertifikasi.
+            </p>
+          </div>
+        </div>
+
+        <Link to="/admin/sertifikasi" className="shrink-0">
+          <Button variant="primary" size="sm" className="bg-blue-600 hover:bg-blue-500 text-xs shadow-md">
+            Buka Sertifikasi Google
+            <ExternalLink className="w-3.5 h-3.5 ml-1.5" />
+          </Button>
+        </Link>
+      </div>
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="space-y-1">
@@ -140,18 +176,24 @@ export const RiwayatManager: React.FC = () => {
               <GraduationCap className="w-5 h-5" aria-hidden="true" />
             </div>
             <h1 className="text-2xl font-extrabold font-display text-slate-900 dark:text-white">
-              Riwayat Pendidikan, Organisasi & Kredensial
+              Riwayat Pendidikan, Organisasi & Karir
             </h1>
           </div>
           <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-            Kelola rekam jejak akademik, organisasi keagamaan, pengalaman mengajar, dan sertifikasi resmi Google for Education.
+            Kelola linimasa rekam jejak akademik, kepengurusan MGMP/AGPAII, dan pengalaman mengajar di landing page.
           </p>
         </div>
 
-        <Button type="button" variant="primary" size="md" onClick={openCreateModal}>
-          <Plus className="w-4 h-4 mr-1.5" />
-          Tambah Riwayat Baru
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button type="button" variant="outline" size="md" onClick={handleSeed} isLoading={isSeeding}>
+            <Sparkles className="w-4 h-4 mr-1.5 text-amber-500" />
+            Muat Data Standar
+          </Button>
+          <Button type="button" variant="primary" size="md" onClick={openCreateModal}>
+            <Plus className="w-4 h-4 mr-1.5" />
+            Tambah Riwayat Baru
+          </Button>
+        </div>
       </div>
 
       {/* Category Filter Tabs */}
@@ -161,7 +203,7 @@ export const RiwayatManager: React.FC = () => {
           { key: 'pendidikan', label: 'Pendidikan', icon: GraduationCap },
           { key: 'organisasi', label: 'Organisasi', icon: Users },
           { key: 'pengalaman', label: 'Pengalaman', icon: Briefcase },
-          { key: 'sertifikasi', label: 'Sertifikasi Google & Lainnya', icon: Award },
+          { key: 'sertifikasi', label: 'Kredensial & Lainnya', icon: Award },
         ].map((tab) => {
           const Icon = tab.icon;
           const active = activeTab === tab.key;
@@ -196,6 +238,9 @@ export const RiwayatManager: React.FC = () => {
           <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200">
             Belum ada data pada kategori ini.
           </h3>
+          <Button variant="outline" size="sm" onClick={handleSeed}>
+            Muat Data Standar
+          </Button>
         </Card>
       ) : (
         <div className="space-y-3">

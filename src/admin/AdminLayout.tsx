@@ -19,7 +19,7 @@ import {
   MessageSquare,
   HelpCircle,
   Mail,
-  CheckCircle,
+  Award,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useProfile } from '../hooks/useProfile';
@@ -59,7 +59,8 @@ export const AdminLayout: React.FC = () => {
   const navItems = [
     { label: 'Dashboard', href: '/admin', icon: LayoutDashboard, exact: true },
     { label: 'Urutan Landing Page', href: '/admin/sections', icon: MoveVertical },
-    { label: 'Riwayat & Kredensial', href: '/admin/riwayat', icon: GraduationCap },
+    { label: 'Sertifikasi Google', href: '/admin/sertifikasi', icon: ShieldCheck },
+    { label: 'Riwayat & Karir', href: '/admin/riwayat', icon: GraduationCap },
     { label: 'Materi PAI & Modul', href: '/admin/materi', icon: BookOpen },
     {
       label: 'Moderasi Komentar',
@@ -74,7 +75,7 @@ export const AdminLayout: React.FC = () => {
     {
       label: 'Testimoni',
       href: '/admin/testimoni',
-      icon: MessageSquare,
+      icon: Sparkles,
       badge: pendingTestimoni > 0 ? pendingTestimoni : undefined,
     },
     { label: 'Tanya Jawab (FAQ)', href: '/admin/faq', icon: HelpCircle },
@@ -113,7 +114,7 @@ export const AdminLayout: React.FC = () => {
                 Admin Panel PAI
               </span>
               <span className="text-[11px] text-brand-600 dark:text-brand-400 font-medium">
-                Phase 2 Portal
+                Portal Manajemen
               </span>
             </div>
           </Link>

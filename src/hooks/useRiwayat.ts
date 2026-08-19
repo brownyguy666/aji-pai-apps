@@ -50,6 +50,15 @@ export const useRiwayat = (options?: {
         return saved ? JSON.parse(saved) : initialRiwayat;
       }
 
+      // If database table is empty, provide initialRiwayat as default fallback
+      if (!data || data.length === 0) {
+        let list = initialRiwayat;
+        if (options?.jenis && options.jenis !== 'all') {
+          list = list.filter((r) => r.jenis === options.jenis);
+        }
+        return list;
+      }
+
       return data as Riwayat[];
     },
   });
@@ -75,6 +84,27 @@ export const useRiwayat = (options?: {
 
       if (error) throw error;
       return data as Riwayat;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['riwayat'] });
+    },
+  });
+
+  const seedRiwayatMutation = useMutation({
+    mutationFn: async () => {
+      if (!isSupabaseConfigured) {
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(initialRiwayat));
+        return initialRiwayat;
+      }
+
+      const cleanItems = initialRiwayat.map(({ id, ...rest }) => rest);
+      const { data, error } = await supabase
+        .from('riwayat')
+        .insert(cleanItems)
+        .select();
+
+      if (error) throw error;
+      return data as Riwayat[];
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['riwayat'] });
@@ -129,7 +159,9 @@ export const useRiwayat = (options?: {
     createRiwayat: createRiwayatMutation.mutateAsync,
     updateRiwayat: updateRiwayatMutation.mutateAsync,
     deleteRiwayat: deleteRiwayatMutation.mutateAsync,
+    seedRiwayat: seedRiwayatMutation.mutateAsync,
     isCreating: createRiwayatMutation.isPending,
     isUpdating: updateRiwayatMutation.isPending,
+    isSeeding: seedRiwayatMutation.isPending,
   };
 };

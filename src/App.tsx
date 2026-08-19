@@ -20,13 +20,14 @@ import { AdminLayout } from './admin/AdminLayout';
 import { AdminDashboardPage } from './admin/AdminDashboardPage';
 import { SectionManager } from './admin/SectionManager';
 import { ProfileEditor } from './admin/ProfileEditor';
+import { SertifikasiManager } from './admin/SertifikasiManager';
+import { RiwayatManager } from './admin/RiwayatManager';
 import { MateriManager } from './admin/MateriManager';
 import { MateriFormPage } from './admin/MateriFormPage';
 import { KategoriManager } from './admin/KategoriManager';
 import { TerjemahanManager } from './admin/TerjemahanManager';
 import { KaryaManager } from './admin/KaryaManager';
 import { YouTubeManager } from './admin/YouTubeManager';
-import { RiwayatManager } from './admin/RiwayatManager';
 import { KomentarManager } from './admin/KomentarManager';
 import { TestimoniManager } from './admin/TestimoniManager';
 import { FaqManager } from './admin/FaqManager';
@@ -62,12 +63,12 @@ export function App() {
                 {/* Admin Login Route */}
                 <Route path="/admin/login" element={<AdminLoginPage />} />
 
-                {/* Admin Protected Dashboard Routes (Phase 2 Full Suite) */}
+                {/* Admin Protected Dashboard Routes */}
                 <Route path="/admin" element={<AdminLayout />}>
                   <Route index element={<AdminDashboardPage />} />
                   <Route path="sections" element={<SectionManager />} />
+                  <Route path="sertifikasi" element={<SertifikasiManager />} />
                   <Route path="riwayat" element={<RiwayatManager />} />
-                  <Route path="sertifikasi" element={<RiwayatManager />} />
                   <Route path="materi" element={<MateriManager />} />
                   <Route path="materi/new" element={<MateriFormPage />} />
                   <Route path="materi/edit/:id" element={<MateriFormPage />} />
