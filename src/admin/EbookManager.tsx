@@ -256,7 +256,7 @@ export const EbookManager: React.FC = () => {
       // Clean filename or full url
       let fileName = line;
       if (fileName.startsWith('http://') || fileName.startsWith('https://')) {
-        fileName = fileName.substring(fileName.lastIndexOf('/') + 1);
+        fileName = decodeURIComponent(fileName.substring(fileName.lastIndexOf('/') + 1));
       }
 
       // Detect format extension
@@ -264,8 +264,8 @@ export const EbookManager: React.FC = () => {
       const ext = (extMatch ? extMatch[1].toLowerCase() : 'epub') as EBookFormat;
       const validFormat: EBookFormat = ['epub', 'pdf', 'mobi', 'azw3'].includes(ext) ? ext : 'epub';
 
-      // Clean name for title
-      const baseName = fileName.replace(/\.[^/.]+$/, '');
+      // Clean name for title (handles spaces, underscores, and dashes)
+      const baseName = decodeURIComponent(fileName).replace(/\.[^/.]+$/, '');
       const cleanTitle = baseName
         .replace(/[_-]+/g, ' ')
         .replace(/\s+/g, ' ')
@@ -273,8 +273,10 @@ export const EbookManager: React.FC = () => {
         .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
         .join(' ');
 
-      // Build full R2 direct URL
-      const fullUrl = line.startsWith('http') ? line : `${domain}/${encodeURIComponent(fileName)}`;
+      // Build full R2 direct URL (properly encoding spaces for web URLs)
+      const fullUrl = line.startsWith('http')
+        ? line
+        : `${domain}/${encodeURIComponent(fileName.trim())}`;
 
       // Category detection
       let detectedCategory = 'Fikih Syafi\'i';
