@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Languages, ArrowRight, BookMarked, CheckCircle2 } from 'lucide-react';
+import { Languages, ArrowRight } from 'lucide-react';
 import { useTerjemahan } from '../../hooks/useTerjemahan';
 import { useThemeAccent } from '../../context/ThemeAccentContext';
 

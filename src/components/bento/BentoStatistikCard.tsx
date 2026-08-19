@@ -1,11 +1,11 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Activity, BookOpen, Layers, Sparkles } from 'lucide-react';
+import { Activity } from 'lucide-react';
 import { useStatistik } from '../../hooks/useStatistik';
 import { useThemeAccent } from '../../context/ThemeAccentContext';
 
 export const BentoStatistikCard: React.FC = () => {
-  const { data: statistik, isLoading } = useStatistik();
+  const { data: statistik } = useStatistik();
   const { theme } = useThemeAccent();
 
   const totalMateri = statistik?.totalMateri || 15;

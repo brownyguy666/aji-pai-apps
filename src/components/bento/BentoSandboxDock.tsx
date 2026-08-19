@@ -5,7 +5,6 @@ import {
   Sparkles,
   Layers,
   Check,
-  Eye,
   Sliders,
 } from 'lucide-react';
 import { useThemeAccent, ACCENT_THEMES, AccentColor } from '../../context/ThemeAccentContext';

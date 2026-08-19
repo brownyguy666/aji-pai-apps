@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { BookOpen, Zap, ArrowRight, Eye } from 'lucide-react';
+import { BookOpen, Zap, ArrowRight } from 'lucide-react';
 import { useEbook } from '../../hooks/useEbook';
 import { EbookReaderModal } from '../ebook/EbookReaderModal';
 import { EBook } from '../../types/database';

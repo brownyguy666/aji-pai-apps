@@ -40,7 +40,7 @@ import { extractEpubMetadataAndCover } from '../lib/epubMetadataHelper';
 const R2_DOMAIN_STORAGE_KEY = 'aji_pai_r2_domain';
 const DEFAULT_R2_DOMAIN = 'https://pub-d494b67231904a24a45db5300095094f.r2.dev';
 
-export const CATEGORY_PRESETS = [
+const CATEGORY_PRESETS = [
   'Novel & Sastra Fiksi',
   'Modul Kurikulum Merdeka',
   'Fikih Syafi\'i',

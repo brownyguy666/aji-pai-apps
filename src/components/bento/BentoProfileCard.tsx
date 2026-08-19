@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { CheckCircle, Mail, BookOpen, Sparkles, ExternalLink, ArrowUpRight } from 'lucide-react';
+import { CheckCircle, Mail, BookOpen } from 'lucide-react';
 import { YoutubeIcon, WhatsAppIcon, InstagramIcon } from '../ui/Icons';
 import { useProfile } from '../../hooks/useProfile';
 import { useThemeAccent } from '../../context/ThemeAccentContext';

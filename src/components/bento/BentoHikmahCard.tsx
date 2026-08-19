@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Sparkles, BookOpen, Quote, ArrowRight, Heart } from 'lucide-react';
+import { Sparkles, Quote, ArrowRight, Heart } from 'lucide-react';
 import { useThemeAccent } from '../../context/ThemeAccentContext';
 
 const HIKMAH_LIST = [
