@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { HelmetProvider } from 'react-helmet-async';
 import { AuthProvider } from './context/AuthContext';
 import { ToastProvider } from './components/ui/Toast';
 
@@ -25,7 +26,11 @@ import { KategoriManager } from './admin/KategoriManager';
 import { TerjemahanManager } from './admin/TerjemahanManager';
 import { KaryaManager } from './admin/KaryaManager';
 import { YouTubeManager } from './admin/YouTubeManager';
-import { SertifikasiManager } from './admin/SertifikasiManager';
+import { RiwayatManager } from './admin/RiwayatManager';
+import { KomentarManager } from './admin/KomentarManager';
+import { TestimoniManager } from './admin/TestimoniManager';
+import { FaqManager } from './admin/FaqManager';
+import { SubscriberManager } from './admin/SubscriberManager';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -38,46 +43,53 @@ const queryClient = new QueryClient({
 
 export function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <ToastProvider>
-          <BrowserRouter>
-            <Routes>
-              {/* Public Website Routes */}
-              <Route path="/" element={<Layout />}>
-                <Route index element={<HomePage />} />
-                <Route path="materi" element={<MateriListPage />} />
-                <Route path="materi/:slug" element={<MateriDetailPage />} />
-                <Route path="terjemahan" element={<TerjemahanPage />} />
-                <Route path="karya" element={<KaryaPage />} />
-                <Route path="*" element={<NotFoundPage />} />
-              </Route>
+    <HelmetProvider>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <ToastProvider>
+            <BrowserRouter>
+              <Routes>
+                {/* Public Website Routes */}
+                <Route path="/" element={<Layout />}>
+                  <Route index element={<HomePage />} />
+                  <Route path="materi" element={<MateriListPage />} />
+                  <Route path="materi/:slug" element={<MateriDetailPage />} />
+                  <Route path="terjemahan" element={<TerjemahanPage />} />
+                  <Route path="karya" element={<KaryaPage />} />
+                  <Route path="*" element={<NotFoundPage />} />
+                </Route>
 
-              {/* Admin Login Route */}
-              <Route path="/admin/login" element={<AdminLoginPage />} />
+                {/* Admin Login Route */}
+                <Route path="/admin/login" element={<AdminLoginPage />} />
 
-              {/* Admin Protected Dashboard Routes */}
-              <Route path="/admin" element={<AdminLayout />}>
-                <Route index element={<AdminDashboardPage />} />
-                <Route path="sections" element={<SectionManager />} />
-                <Route path="sertifikasi" element={<SertifikasiManager />} />
-                <Route path="profile" element={<ProfileEditor />} />
-                <Route path="materi" element={<MateriManager />} />
-                <Route path="materi/new" element={<MateriFormPage />} />
-                <Route path="materi/edit/:id" element={<MateriFormPage />} />
-                <Route path="kategori" element={<KategoriManager />} />
-                <Route path="terjemahan" element={<TerjemahanManager />} />
-                <Route path="karya" element={<KaryaManager />} />
-                <Route path="youtube" element={<YouTubeManager />} />
-              </Route>
+                {/* Admin Protected Dashboard Routes (Phase 2 Full Suite) */}
+                <Route path="/admin" element={<AdminLayout />}>
+                  <Route index element={<AdminDashboardPage />} />
+                  <Route path="sections" element={<SectionManager />} />
+                  <Route path="riwayat" element={<RiwayatManager />} />
+                  <Route path="sertifikasi" element={<RiwayatManager />} />
+                  <Route path="materi" element={<MateriManager />} />
+                  <Route path="materi/new" element={<MateriFormPage />} />
+                  <Route path="materi/edit/:id" element={<MateriFormPage />} />
+                  <Route path="komentar" element={<KomentarManager />} />
+                  <Route path="kategori" element={<KategoriManager />} />
+                  <Route path="terjemahan" element={<TerjemahanManager />} />
+                  <Route path="karya" element={<KaryaManager />} />
+                  <Route path="youtube" element={<YouTubeManager />} />
+                  <Route path="testimoni" element={<TestimoniManager />} />
+                  <Route path="faq" element={<FaqManager />} />
+                  <Route path="subscriber" element={<SubscriberManager />} />
+                  <Route path="profile" element={<ProfileEditor />} />
+                </Route>
 
-              {/* Fallback */}
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </BrowserRouter>
-        </ToastProvider>
-      </AuthProvider>
-    </QueryClientProvider>
+                {/* Fallback */}
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+            </BrowserRouter>
+          </ToastProvider>
+        </AuthProvider>
+      </QueryClientProvider>
+    </HelmetProvider>
   );
 }
 

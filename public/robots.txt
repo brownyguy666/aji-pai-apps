@@ -1,0 +1,7 @@
+# robots.txt for Aji Bagus Khoiri PAI Portal
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /admin/*
+
+Sitemap: https://aji-pai.sch.id/sitemap.xml

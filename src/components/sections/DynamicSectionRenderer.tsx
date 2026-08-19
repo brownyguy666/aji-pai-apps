@@ -2,10 +2,14 @@ import React from 'react';
 import { useSections } from '../../hooks/useSections';
 import { HeroSection } from './HeroSection';
 import { SertifikasiSection } from './SertifikasiSection';
+import { StatistikSection } from './StatistikSection';
 import { MateriSection } from './MateriSection';
 import { YouTubeSection } from './YouTubeSection';
 import { TerjemahanSection } from './TerjemahanSection';
 import { KaryaSection } from './KaryaSection';
+import { RiwayatSection } from './RiwayatSection';
+import { TestimoniSection } from './TestimoniSection';
+import { FaqSection } from './FaqSection';
 import { ContactSection } from './ContactSection';
 
 export const DynamicSectionRenderer: React.FC = () => {
@@ -25,6 +29,8 @@ export const DynamicSectionRenderer: React.FC = () => {
         return <HeroSection key="hero" />;
       case 'sertifikasi':
         return <SertifikasiSection key="sertifikasi" />;
+      case 'statistik':
+        return <StatistikSection key="statistik" />;
       case 'materi':
         return <MateriSection key="materi" />;
       case 'youtube':
@@ -33,6 +39,12 @@ export const DynamicSectionRenderer: React.FC = () => {
         return <TerjemahanSection key="terjemahan" />;
       case 'karya':
         return <KaryaSection key="karya" />;
+      case 'riwayat':
+        return <RiwayatSection key="riwayat" />;
+      case 'testimoni':
+        return <TestimoniSection key="testimoni" />;
+      case 'faq':
+        return <FaqSection key="faq" />;
       case 'kontak':
         return <ContactSection key="kontak" />;
       default:

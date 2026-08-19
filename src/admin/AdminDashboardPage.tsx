@@ -10,18 +10,24 @@ import {
   ArrowRight,
   Sparkles,
   Layers,
-  FileText,
   Video,
   ShieldCheck,
-  Award,
+  GraduationCap,
+  MessageSquare,
+  HelpCircle,
+  Mail,
+  Clock,
+  CheckCircle,
 } from 'lucide-react';
-import { YoutubeIcon } from '../components/ui/Icons';
 import { useMateri } from '../hooks/useMateri';
 import { useSections } from '../hooks/useSections';
 import { useTerjemahan } from '../hooks/useTerjemahan';
 import { useKarya } from '../hooks/useKarya';
 import { useYouTube } from '../hooks/useYouTube';
-import { useSertifikasi } from '../hooks/useSertifikasi';
+import { useRiwayat } from '../hooks/useRiwayat';
+import { useKomentar } from '../hooks/useKomentar';
+import { useTestimoni } from '../hooks/useTestimoni';
+import { useSubscriber } from '../hooks/useSubscriber';
 import { useProfile } from '../hooks/useProfile';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -32,7 +38,10 @@ export const AdminDashboardPage: React.FC = () => {
   const { terjemahanList } = useTerjemahan();
   const { karyaList } = useKarya();
   const { videos } = useYouTube();
-  const { sertifikasiList } = useSertifikasi();
+  const { riwayatList } = useRiwayat();
+  const { pendingCount: pendingKomentar } = useKomentar({ status: 'pending' });
+  const { pendingCount: pendingTestimoni } = useTestimoni({ status: 'pending' });
+  const { subscribers } = useSubscriber();
   const { profile } = useProfile();
 
   const stats = [
@@ -43,22 +52,6 @@ export const AdminDashboardPage: React.FC = () => {
       icon: BookOpen,
       color: 'bg-emerald-500 text-white',
       link: '/admin/materi',
-    },
-    {
-      title: 'Sertifikasi Google',
-      count: sertifikasiList.length,
-      subtitle: 'Kredensial resmi',
-      icon: ShieldCheck,
-      color: 'bg-blue-500 text-white',
-      link: '/admin/sertifikasi',
-    },
-    {
-      title: 'Video YouTube',
-      count: videos.length,
-      subtitle: '@ZonaBelajarID',
-      icon: Video,
-      color: 'bg-red-500 text-white',
-      link: '/admin/youtube',
     },
     {
       title: 'Terjemahan Kitab',
@@ -84,6 +77,31 @@ export const AdminDashboardPage: React.FC = () => {
       color: 'bg-indigo-500 text-white',
       link: '/admin/sections',
     },
+    // Phase 2 New Stat Cards
+    {
+      title: 'Komentar Pending',
+      count: pendingKomentar,
+      subtitle: pendingKomentar > 0 ? 'Perlu ditinjau' : 'Semua termoderasi',
+      icon: MessageSquare,
+      color: pendingKomentar > 0 ? 'bg-amber-500 text-white' : 'bg-slate-700 text-white',
+      link: '/admin/komentar',
+    },
+    {
+      title: 'Testimoni Pending',
+      count: pendingTestimoni,
+      subtitle: pendingTestimoni > 0 ? 'Menunggu approval' : 'Semua disetujui',
+      icon: Sparkles,
+      color: pendingTestimoni > 0 ? 'bg-pink-500 text-white' : 'bg-slate-700 text-white',
+      link: '/admin/testimoni',
+    },
+    {
+      title: 'Subscriber Newsletter',
+      count: subscribers.length,
+      subtitle: 'Email terdaftar',
+      icon: Mail,
+      color: 'bg-purple-500 text-white',
+      link: '/admin/subscriber',
+    },
   ];
 
   return (
@@ -95,7 +113,7 @@ export const AdminDashboardPage: React.FC = () => {
             Selamat Datang, {profile.nama.split(',')[0]}!
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Sistem pengelola materi PAI Fase D, sertifikasi Google Accredible, video YouTube, dan portofolio digital.
+            Dashboard terpadu Phase 2: Moderasi komentar, subscriber newsletter, rekam jejak, dan materi PAI Fase D.
           </p>
         </div>
 
@@ -110,25 +128,25 @@ export const AdminDashboardPage: React.FC = () => {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-3.5">
         {stats.map((st) => {
           const Icon = st.icon;
           return (
             <Link key={st.title} to={st.link}>
               <Card hoverEffect className="p-4 flex flex-col justify-between h-full bg-white dark:bg-slate-900 border">
                 <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
                     {st.title}
                   </span>
-                  <div className={`p-2 rounded-xl ${st.color} shadow-sm`}>
-                    <Icon className="w-4 h-4" />
+                  <div className={`p-2 rounded-xl ${st.color} shadow-xs`}>
+                    <Icon className="w-3.5 h-3.5" />
                   </div>
                 </div>
                 <div className="mt-3">
                   <div className="text-2xl font-extrabold font-display text-slate-900 dark:text-white">
                     {st.count}
                   </div>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{st.subtitle}</p>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">{st.subtitle}</p>
                 </div>
               </Card>
             </Link>
@@ -150,7 +168,7 @@ export const AdminDashboardPage: React.FC = () => {
                 Kontrol Modular Landing Page
               </h3>
               <p className="text-xs text-slate-500">
-                Atur urutan dan visibilitas section beranda dengan Drag & Drop.
+                Atur urutan dan visibilitas 10+ section beranda dengan Drag & Drop / Tombol Panah.
               </p>
             </div>
           </div>
@@ -198,21 +216,53 @@ export const AdminDashboardPage: React.FC = () => {
             </div>
             <div>
               <h3 className="font-display font-bold text-base text-slate-900 dark:text-white">
-                Pintasan Manajemen Cepat
+                Pintasan Manajemen Cepat (Phase 2)
               </h3>
               <p className="text-xs text-slate-500">
-                Akses instan ke seluruh modul pengelolaan konten.
+                Akses instan ke modul moderasi komentar, subscriber, dan Tanya Jawab (FAQ).
               </p>
             </div>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 pt-1">
             <Link
-              to="/admin/sertifikasi"
+              to="/admin/komentar"
               className="p-3 rounded-xl bg-slate-50 hover:bg-slate-100 dark:bg-slate-800/60 dark:hover:bg-slate-800 border border-slate-200/60 dark:border-slate-700/60 text-xs font-semibold flex items-center gap-2 transition-colors"
             >
-              <ShieldCheck className="w-4 h-4 text-blue-500" />
-              <span>Sertifikasi</span>
+              <MessageSquare className="w-4 h-4 text-amber-500" />
+              <span>Moderasi Komentar</span>
+            </Link>
+
+            <Link
+              to="/admin/testimoni"
+              className="p-3 rounded-xl bg-slate-50 hover:bg-slate-100 dark:bg-slate-800/60 dark:hover:bg-slate-800 border border-slate-200/60 dark:border-slate-700/60 text-xs font-semibold flex items-center gap-2 transition-colors"
+            >
+              <Sparkles className="w-4 h-4 text-pink-500" />
+              <span>Testimoni</span>
+            </Link>
+
+            <Link
+              to="/admin/faq"
+              className="p-3 rounded-xl bg-slate-50 hover:bg-slate-100 dark:bg-slate-800/60 dark:hover:bg-slate-800 border border-slate-200/60 dark:border-slate-700/60 text-xs font-semibold flex items-center gap-2 transition-colors"
+            >
+              <HelpCircle className="w-4 h-4 text-orange-500" />
+              <span>Tanya Jawab (FAQ)</span>
+            </Link>
+
+            <Link
+              to="/admin/subscriber"
+              className="p-3 rounded-xl bg-slate-50 hover:bg-slate-100 dark:bg-slate-800/60 dark:hover:bg-slate-800 border border-slate-200/60 dark:border-slate-700/60 text-xs font-semibold flex items-center gap-2 transition-colors"
+            >
+              <Mail className="w-4 h-4 text-purple-500" />
+              <span>Subscriber Email</span>
+            </Link>
+
+            <Link
+              to="/admin/riwayat"
+              className="p-3 rounded-xl bg-slate-50 hover:bg-slate-100 dark:bg-slate-800/60 dark:hover:bg-slate-800 border border-slate-200/60 dark:border-slate-700/60 text-xs font-semibold flex items-center gap-2 transition-colors"
+            >
+              <GraduationCap className="w-4 h-4 text-emerald-500" />
+              <span>Riwayat & Kredensial</span>
             </Link>
 
             <Link
@@ -221,38 +271,6 @@ export const AdminDashboardPage: React.FC = () => {
             >
               <Layers className="w-4 h-4 text-brand-500" />
               <span>Kategori Fase D</span>
-            </Link>
-
-            <Link
-              to="/admin/youtube"
-              className="p-3 rounded-xl bg-slate-50 hover:bg-slate-100 dark:bg-slate-800/60 dark:hover:bg-slate-800 border border-slate-200/60 dark:border-slate-700/60 text-xs font-semibold flex items-center gap-2 transition-colors"
-            >
-              <Video className="w-4 h-4 text-red-500" />
-              <span>Sinkron YouTube</span>
-            </Link>
-
-            <Link
-              to="/admin/terjemahan"
-              className="p-3 rounded-xl bg-slate-50 hover:bg-slate-100 dark:bg-slate-800/60 dark:hover:bg-slate-800 border border-slate-200/60 dark:border-slate-700/60 text-xs font-semibold flex items-center gap-2 transition-colors"
-            >
-              <Languages className="w-4 h-4 text-amber-500" />
-              <span>Terjemahan</span>
-            </Link>
-
-            <Link
-              to="/admin/karya"
-              className="p-3 rounded-xl bg-slate-50 hover:bg-slate-100 dark:bg-slate-800/60 dark:hover:bg-slate-800 border border-slate-200/60 dark:border-slate-700/60 text-xs font-semibold flex items-center gap-2 transition-colors"
-            >
-              <Palette className="w-4 h-4 text-teal-500" />
-              <span>Galeri Karya</span>
-            </Link>
-
-            <Link
-              to="/admin/profile"
-              className="p-3 rounded-xl bg-slate-50 hover:bg-slate-100 dark:bg-slate-800/60 dark:hover:bg-slate-800 border border-slate-200/60 dark:border-slate-700/60 text-xs font-semibold flex items-center gap-2 transition-colors"
-            >
-              <User className="w-4 h-4 text-indigo-500" />
-              <span>Profil Guru</span>
             </Link>
           </div>
         </Card>

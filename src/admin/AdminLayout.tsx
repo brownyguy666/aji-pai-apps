@@ -15,14 +15,25 @@ import {
   X,
   Sparkles,
   ShieldCheck,
+  GraduationCap,
+  MessageSquare,
+  HelpCircle,
+  Mail,
+  CheckCircle,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useProfile } from '../hooks/useProfile';
+import { useKomentar } from '../hooks/useKomentar';
+import { useTestimoni } from '../hooks/useTestimoni';
+import { useSubscriber } from '../hooks/useSubscriber';
 import { Button } from '../components/ui/Button';
 
 export const AdminLayout: React.FC = () => {
   const { user, isLoading, signOut, isDemoMode } = useAuth();
   const { profile } = useProfile();
+  const { pendingCount: pendingKomentar } = useKomentar({ status: 'pending' });
+  const { pendingCount: pendingTestimoni } = useTestimoni({ status: 'pending' });
+  const { subscribers } = useSubscriber();
   const location = useLocation();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -48,12 +59,31 @@ export const AdminLayout: React.FC = () => {
   const navItems = [
     { label: 'Dashboard', href: '/admin', icon: LayoutDashboard, exact: true },
     { label: 'Urutan Landing Page', href: '/admin/sections', icon: MoveVertical },
-    { label: 'Sertifikasi & Kredensial', href: '/admin/sertifikasi', icon: ShieldCheck },
+    { label: 'Riwayat & Kredensial', href: '/admin/riwayat', icon: GraduationCap },
     { label: 'Materi PAI & Modul', href: '/admin/materi', icon: BookOpen },
+    {
+      label: 'Moderasi Komentar',
+      href: '/admin/komentar',
+      icon: MessageSquare,
+      badge: pendingKomentar > 0 ? pendingKomentar : undefined,
+    },
     { label: 'Kategori Bertingkat', href: '/admin/kategori', icon: FolderTree },
     { label: 'Proyek Terjemahan', href: '/admin/terjemahan', icon: Languages },
     { label: 'Galeri Portofolio', href: '/admin/karya', icon: Palette },
     { label: 'Video YouTube', href: '/admin/youtube', icon: Video },
+    {
+      label: 'Testimoni',
+      href: '/admin/testimoni',
+      icon: MessageSquare,
+      badge: pendingTestimoni > 0 ? pendingTestimoni : undefined,
+    },
+    { label: 'Tanya Jawab (FAQ)', href: '/admin/faq', icon: HelpCircle },
+    {
+      label: 'Subscriber Newsletter',
+      href: '/admin/subscriber',
+      icon: Mail,
+      count: subscribers.length,
+    },
     { label: 'Profil & Bio Guru', href: '/admin/profile', icon: User },
   ];
 
@@ -73,7 +103,7 @@ export const AdminLayout: React.FC = () => {
       {/* Sidebar for Desktop */}
       <aside className="hidden lg:flex flex-col w-64 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shrink-0">
         {/* Brand */}
-        <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+        <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-brand-700 to-brand-500 flex items-center justify-center text-white shadow-md">
               <BookOpen className="w-5 h-5" />
@@ -83,7 +113,7 @@ export const AdminLayout: React.FC = () => {
                 Admin Panel PAI
               </span>
               <span className="text-[11px] text-brand-600 dark:text-brand-400 font-medium">
-                Sistem Pengelola
+                Phase 2 Portal
               </span>
             </div>
           </Link>
@@ -98,7 +128,7 @@ export const AdminLayout: React.FC = () => {
         )}
 
         {/* Navigation Items */}
-        <nav className="flex-1 p-4 space-y-1.5 overflow-y-auto">
+        <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
           {navItems.map((item) => {
             const Icon = item.icon;
             const active = isActive(item.href, item.exact);
@@ -106,14 +136,26 @@ export const AdminLayout: React.FC = () => {
               <Link
                 key={item.href}
                 to={item.href}
-                className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-medium transition-all ${
+                className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs sm:text-sm font-medium transition-all ${
                   active
                     ? 'bg-brand-600 text-white font-semibold shadow-md shadow-brand-600/20'
                     : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/80'
                 }`}
               >
-                <Icon className="w-4 h-4 shrink-0" />
-                <span>{item.label}</span>
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <Icon className="w-4 h-4 shrink-0" />
+                  <span className="truncate">{item.label}</span>
+                </div>
+
+                {item.badge ? (
+                  <span className="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-amber-500 text-slate-950">
+                    {item.badge}
+                  </span>
+                ) : item.count !== undefined ? (
+                  <span className="text-[10px] font-mono text-slate-400">
+                    {item.count}
+                  </span>
+                ) : null}
               </Link>
             );
           })}
@@ -184,7 +226,7 @@ export const AdminLayout: React.FC = () => {
 
         {/* Mobile Drawer Menu */}
         {sidebarOpen && (
-          <div className="lg:hidden p-4 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 space-y-2">
+          <div className="lg:hidden p-4 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 space-y-1 max-h-[80vh] overflow-y-auto">
             {navItems.map((item) => {
               const Icon = item.icon;
               const active = isActive(item.href, item.exact);
@@ -193,12 +235,19 @@ export const AdminLayout: React.FC = () => {
                   key={item.href}
                   to={item.href}
                   onClick={() => setSidebarOpen(false)}
-                  className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium ${
+                  className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium ${
                     active ? 'bg-brand-600 text-white' : 'text-slate-700 dark:text-slate-300'
                   }`}
                 >
-                  <Icon className="w-4 h-4" />
-                  <span>{item.label}</span>
+                  <div className="flex items-center gap-3">
+                    <Icon className="w-4 h-4" />
+                    <span>{item.label}</span>
+                  </div>
+                  {item.badge && (
+                    <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-amber-500 text-slate-950">
+                      {item.badge}
+                    </span>
+                  )}
                 </Link>
               );
             })}

@@ -20,8 +20,6 @@ import {
   GripVertical,
   MoveVertical,
   CheckCircle,
-  Eye,
-  EyeOff,
   Sparkles,
   Info,
   Layers,
@@ -31,6 +29,12 @@ import {
   Phone,
   User,
   ShieldCheck,
+  BarChart3,
+  GraduationCap,
+  MessageSquare,
+  HelpCircle,
+  ChevronUp,
+  ChevronDown,
 } from 'lucide-react';
 import { YoutubeIcon } from '../components/ui/Icons';
 import { useSections } from '../hooks/useSections';
@@ -44,29 +48,41 @@ import { useToast } from '../components/ui/Toast';
 function getSectionIcon(key: string) {
   switch (key) {
     case 'hero':
-      return <User className="w-5 h-5 text-indigo-500" />;
+      return <User className="w-5 h-5 text-indigo-500" aria-hidden="true" />;
     case 'sertifikasi':
-      return <ShieldCheck className="w-5 h-5 text-blue-500" />;
+      return <ShieldCheck className="w-5 h-5 text-blue-500" aria-hidden="true" />;
+    case 'statistik':
+      return <BarChart3 className="w-5 h-5 text-emerald-500" aria-hidden="true" />;
     case 'materi':
-      return <BookOpen className="w-5 h-5 text-brand-500" />;
+      return <BookOpen className="w-5 h-5 text-brand-500" aria-hidden="true" />;
     case 'youtube':
-      return <YoutubeIcon className="w-5 h-5 text-red-500" />;
+      return <YoutubeIcon className="w-5 h-5 text-red-500" aria-hidden="true" />;
     case 'terjemahan':
-      return <Languages className="w-5 h-5 text-amber-500" />;
+      return <Languages className="w-5 h-5 text-amber-500" aria-hidden="true" />;
     case 'karya':
-      return <Palette className="w-5 h-5 text-teal-500" />;
+      return <Palette className="w-5 h-5 text-teal-500" aria-hidden="true" />;
+    case 'riwayat':
+      return <GraduationCap className="w-5 h-5 text-purple-500" aria-hidden="true" />;
+    case 'testimoni':
+      return <MessageSquare className="w-5 h-5 text-pink-500" aria-hidden="true" />;
+    case 'faq':
+      return <HelpCircle className="w-5 h-5 text-orange-500" aria-hidden="true" />;
     case 'kontak':
-      return <Phone className="w-5 h-5 text-emerald-500" />;
+      return <Phone className="w-5 h-5 text-emerald-500" aria-hidden="true" />;
     default:
-      return <Layers className="w-5 h-5 text-slate-400" />;
+      return <Layers className="w-5 h-5 text-slate-400" aria-hidden="true" />;
   }
 }
 
-// Sortable Item Component
+// Sortable Item Component with Keyboard Alternative Reorder Buttons
 const SortableSectionRow: React.FC<{
   section: SectionItem;
+  index: number;
+  total: number;
   onToggle: (id: string, active: boolean) => void;
-}> = ({ section, onToggle }) => {
+  onMoveUp: (index: number) => void;
+  onMoveDown: (index: number) => void;
+}> = ({ section, index, total, onToggle, onMoveUp, onMoveDown }) => {
   const {
     attributes,
     listeners,
@@ -99,10 +115,11 @@ const SortableSectionRow: React.FC<{
           type="button"
           {...attributes}
           {...listeners}
-          className="cursor-grab active:cursor-grabbing p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 touch-none"
+          aria-label={`Tahan dan geser section ${section.label}`}
+          className="cursor-grab active:cursor-grabbing p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 touch-none focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
           title="Tahan dan geser untuk ubah urutan"
         >
-          <GripVertical className="w-5 h-5" />
+          <GripVertical className="w-5 h-5" aria-hidden="true" />
         </button>
 
         {/* Section Order Badge */}
@@ -131,8 +148,32 @@ const SortableSectionRow: React.FC<{
         </div>
       </div>
 
-      {/* Visibility Toggle Switch */}
-      <div className="flex items-center gap-3 shrink-0 pl-2">
+      {/* Actions: Reorder Buttons (Accessibility) & Visibility Toggle Switch */}
+      <div className="flex items-center gap-2 sm:gap-3 shrink-0 pl-2">
+        {/* Alternative Keyboard Reorder Up/Down Buttons */}
+        <div className="flex items-center gap-0.5 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
+          <button
+            type="button"
+            disabled={index === 0}
+            onClick={() => onMoveUp(index)}
+            aria-label={`Pindahkan section ${section.label} ke atas`}
+            className="p-1 rounded text-slate-500 hover:text-slate-900 dark:hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+            title="Pindahkan ke atas"
+          >
+            <ChevronUp className="w-4 h-4" />
+          </button>
+          <button
+            type="button"
+            disabled={index === total - 1}
+            onClick={() => onMoveDown(index)}
+            aria-label={`Pindahkan section ${section.label} ke bawah`}
+            className="p-1 rounded text-slate-500 hover:text-slate-900 dark:hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+            title="Pindahkan ke bawah"
+          >
+            <ChevronDown className="w-4 h-4" />
+          </button>
+        </div>
+
         <Switch
           checked={section.is_active}
           onChange={(checked) => onToggle(section.id, checked)}
@@ -173,7 +214,6 @@ export const SectionManager: React.FC = () => {
       const newIndex = items.findIndex((i) => i.id === over.id);
       const newItems = arrayMove(items, oldIndex, newIndex);
       
-      // Update local state immediately
       setItems(newItems);
 
       try {
@@ -182,6 +222,30 @@ export const SectionManager: React.FC = () => {
       } catch (err) {
         toastError('Gagal menyimpan urutan section.');
       }
+    }
+  };
+
+  const handleMoveUp = async (index: number) => {
+    if (index === 0) return;
+    const newItems = arrayMove(items, index, index - 1);
+    setItems(newItems);
+    try {
+      await reorderSections(newItems);
+      success('Urutan section berhasil dinaikkan!');
+    } catch (err) {
+      toastError('Gagal memperbarui urutan.');
+    }
+  };
+
+  const handleMoveDown = async (index: number) => {
+    if (index === items.length - 1) return;
+    const newItems = arrayMove(items, index, index + 1);
+    setItems(newItems);
+    try {
+      await reorderSections(newItems);
+      success('Urutan section berhasil diturunkan!');
+    } catch (err) {
+      toastError('Gagal memperbarui urutan.');
     }
   };
 
@@ -200,24 +264,24 @@ export const SectionManager: React.FC = () => {
       <div className="space-y-1">
         <div className="flex items-center gap-2">
           <div className="p-2 rounded-xl bg-blue-100 dark:bg-blue-950/60 text-blue-600">
-            <MoveVertical className="w-5 h-5" />
+            <MoveVertical className="w-5 h-5" aria-hidden="true" />
           </div>
           <h1 className="text-2xl font-extrabold font-display text-slate-900 dark:text-white">
             Pengaturan Tata Letak Modular Landing Page
           </h1>
         </div>
         <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-          Ubah urutan section pada landing page dengan cara <strong>menyeret (drag and drop)</strong> baris di bawah. Aktifkan atau nonaktifkan section sesuai kebutuhan. Perubahan tersimpan secara otomatis.
+          Ubah urutan section pada landing page dengan <strong>menyeret (drag and drop)</strong> atau gunakan tombol panah <strong>Naik / Turun</strong>. Aktifkan atau nonaktifkan section sesuai kebutuhan.
         </p>
       </div>
 
       {/* Info Card */}
       <div className="p-4 rounded-2xl bg-brand-50 dark:bg-brand-950/40 border border-brand-200 dark:border-brand-800 text-xs text-brand-900 dark:text-brand-200 flex items-start gap-3">
-        <Info className="w-5 h-5 text-brand-600 shrink-0 mt-0.5" />
+        <Info className="w-5 h-5 text-brand-600 shrink-0 mt-0.5" aria-hidden="true" />
         <div className="space-y-1">
-          <p className="font-bold">Urutan Dinamis Otomatis Tersinkron</p>
+          <p className="font-bold">Aksesibilitas & Sinkronisasi Real-Time</p>
           <p className="text-brand-700 dark:text-brand-300">
-            Halaman publik <code>/</code> membaca urutan dan status langsung dari database tanpa perlu redeploy kode.
+            Dapat dioperasikan via mouse, sentuhan layar, maupun keyboard. Perubahan langsung aktif di halaman depan website.
           </p>
         </div>
       </div>
@@ -233,11 +297,15 @@ export const SectionManager: React.FC = () => {
           strategy={verticalListSortingStrategy}
         >
           <div className="space-y-3">
-            {items.map((section) => (
+            {items.map((section, idx) => (
               <SortableSectionRow
                 key={section.id}
                 section={section}
+                index={idx}
+                total={items.length}
                 onToggle={handleToggle}
+                onMoveUp={handleMoveUp}
+                onMoveDown={handleMoveDown}
               />
             ))}
           </div>
@@ -248,7 +316,7 @@ export const SectionManager: React.FC = () => {
       <div className="p-4 rounded-2xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500">
         <span>Total Section: {items.length}</span>
         <span className="text-brand-600 dark:text-brand-400 font-semibold flex items-center gap-1">
-          <CheckCircle className="w-3.5 h-3.5" />
+          <CheckCircle className="w-3.5 h-3.5" aria-hidden="true" />
           {isReordering ? 'Menyimpan...' : 'Sinkronisasi Otomatis'}
         </span>
       </div>

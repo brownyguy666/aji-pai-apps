@@ -12,9 +12,12 @@ import {
   ExternalLink,
   Layers,
   AlertCircle,
+  MessageSquare,
+  Tag as TagIcon,
 } from 'lucide-react';
 import { useMateri } from '../hooks/useMateri';
 import { useCategories } from '../hooks/useCategories';
+import { useKomentar } from '../hooks/useKomentar';
 import { MateriPAI } from '../types/database';
 import { Card } from '../components/ui/Card';
 import { Input } from '../components/ui/Input';
@@ -27,6 +30,7 @@ import { useToast } from '../components/ui/Toast';
 export const MateriManager: React.FC = () => {
   const { materiList, isLoading, deleteMateri } = useMateri({ status: 'all' });
   const { categories } = useCategories();
+  const { komentarList } = useKomentar({ status: 'all' });
   const { success, error: toastError } = useToast();
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -54,6 +58,10 @@ export const MateriManager: React.FC = () => {
     }
   };
 
+  const getPendingCommentsCount = (materiId: string) => {
+    return komentarList.filter((k) => k.materi_id === materiId && k.status === 'pending').length;
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -61,14 +69,14 @@ export const MateriManager: React.FC = () => {
         <div>
           <div className="flex items-center gap-2">
             <div className="p-2 rounded-xl bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600">
-              <BookOpen className="w-5 h-5" />
+              <BookOpen className="w-5 h-5" aria-hidden="true" />
             </div>
             <h1 className="text-2xl font-extrabold font-display text-slate-900 dark:text-white">
               Manajemen Materi & Modul PAI
             </h1>
           </div>
           <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Kelola artikel, modul ajar interaktif, lampiran file unduhan, dan kategori bertingkat.
+            Kelola artikel, modul ajar interaktif, lampiran file unduhan, dan pantau komentar pending.
           </p>
         </div>
 
@@ -128,8 +136,9 @@ export const MateriManager: React.FC = () => {
             <thead className="bg-slate-50 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 text-xs uppercase font-bold border-b border-slate-100 dark:border-slate-800">
               <tr>
                 <th className="px-6 py-4">Materi & Cover</th>
-                <th className="px-6 py-4">Kategori</th>
+                <th className="px-6 py-4">Kategori & Tag</th>
                 <th className="px-6 py-4">Lampiran</th>
+                <th className="px-6 py-4">Komentar</th>
                 <th className="px-6 py-4">Status</th>
                 <th className="px-6 py-4">Dibuat</th>
                 <th className="px-6 py-4 text-right">Aksi</th>
@@ -138,13 +147,13 @@ export const MateriManager: React.FC = () => {
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {isLoading ? (
                 <tr>
-                  <td colSpan={6} className="text-center py-8 text-slate-400">
+                  <td colSpan={7} className="text-center py-8 text-slate-400">
                     Memuat materi...
                   </td>
                 </tr>
               ) : filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="text-center py-12 space-y-2">
+                  <td colSpan={7} className="text-center py-12 space-y-2">
                     <p className="text-slate-500 font-medium">Tidak ada materi yang ditemukan</p>
                     <Link to="/admin/materi/new">
                       <Button variant="outline" size="sm">
@@ -154,102 +163,133 @@ export const MateriManager: React.FC = () => {
                   </td>
                 </tr>
               ) : (
-                filtered.map((item) => (
-                  <tr
-                    key={item.id}
-                    className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors"
-                  >
-                    {/* Title and Cover */}
-                    <td className="px-6 py-4 min-w-[280px]">
-                      <div className="flex items-center gap-3">
-                        <img
-                          src={
-                            item.gambar_cover_url ||
-                            'https://images.unsplash.com/photo-1584551246679-0daf3d275d0f?auto=format&fit=crop&w=400&q=80'
-                          }
-                          alt={item.judul}
-                          className="w-12 h-12 rounded-xl object-cover border border-slate-200 dark:border-slate-800 shrink-0"
-                        />
-                        <div className="min-w-0">
+                filtered.map((item) => {
+                  const pendingComments = getPendingCommentsCount(item.id);
+                  return (
+                    <tr
+                      key={item.id}
+                      className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors"
+                    >
+                      {/* Title and Cover */}
+                      <td className="px-6 py-4 min-w-[280px]">
+                        <div className="flex items-center gap-3">
+                          <img
+                            src={
+                              item.gambar_cover_url ||
+                              'https://images.unsplash.com/photo-1584551246679-0daf3d275d0f?auto=format&fit=crop&w=400&q=80'
+                            }
+                            alt={item.judul}
+                            className="w-12 h-12 rounded-xl object-cover border border-slate-200 dark:border-slate-800 shrink-0"
+                          />
+                          <div className="min-w-0">
+                            <Link
+                              to={`/admin/materi/edit/${item.id}`}
+                              className="font-bold text-slate-900 dark:text-white hover:text-brand-600 dark:hover:text-brand-400 line-clamp-1"
+                            >
+                              {item.judul}
+                            </Link>
+                            <span className="text-xs text-slate-400 font-mono">
+                              /{item.slug}
+                            </span>
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* Category & Tags */}
+                      <td className="px-6 py-4">
+                        <div className="space-y-1">
+                          {item.kategori ? (
+                            <Badge variant="brand" size="sm">
+                              {item.kategori.nama}
+                            </Badge>
+                          ) : (
+                            <span className="text-xs text-slate-400 italic">Tanpa Kategori</span>
+                          )}
+                          {item.tags && item.tags.length > 0 && (
+                            <div className="flex items-center gap-1 flex-wrap">
+                              {item.tags.slice(0, 2).map((t) => (
+                                <span key={t.id} className="text-[10px] text-slate-400">
+                                  #{t.nama}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </td>
+
+                      {/* Attachments */}
+                      <td className="px-6 py-4">
+                        {item.files && item.files.length > 0 ? (
+                          <div className="flex items-center gap-1 text-xs text-slate-600 dark:text-slate-300 font-semibold">
+                            <FileText className="w-3.5 h-3.5 text-brand-500" />
+                            <span>{item.files.length} file</span>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-slate-400">-</span>
+                        )}
+                      </td>
+
+                      {/* Comments with Pending Badge */}
+                      <td className="px-6 py-4">
+                        {pendingComments > 0 ? (
+                          <Link to="/admin/komentar">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500 text-slate-950 hover:bg-amber-400 transition-colors animate-pulse">
+                              <MessageSquare className="w-3 h-3" />
+                              {pendingComments} Pending
+                            </span>
+                          </Link>
+                        ) : (
+                          <span className="text-xs text-slate-400 flex items-center gap-1">
+                            <MessageSquare className="w-3 h-3" />
+                            0 Pending
+                          </span>
+                        )}
+                      </td>
+
+                      {/* Status */}
+                      <td className="px-6 py-4">
+                        {item.status === 'published' ? (
+                          <Badge variant="brand" size="sm">Tayang</Badge>
+                        ) : (
+                          <Badge variant="secondary" size="sm">Draf</Badge>
+                        )}
+                      </td>
+
+                      {/* Date */}
+                      <td className="px-6 py-4 text-xs text-slate-400">
+                        {formatDate(item.created_at)}
+                      </td>
+
+                      {/* Actions */}
+                      <td className="px-6 py-4 text-right">
+                        <div className="flex items-center justify-end gap-1.5">
+                          <Link
+                            to={`/materi/${item.slug}`}
+                            target="_blank"
+                            className="p-2 rounded-lg text-slate-400 hover:text-brand-600 hover:bg-slate-100 dark:hover:bg-slate-800"
+                            title="Lihat Pratinjau Publik"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </Link>
                           <Link
                             to={`/admin/materi/edit/${item.id}`}
-                            className="font-bold text-slate-900 dark:text-white hover:text-brand-600 dark:hover:text-brand-400 line-clamp-1"
+                            className="p-2 rounded-lg text-slate-600 hover:text-brand-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+                            title="Edit Materi"
                           >
-                            {item.judul}
+                            <Edit className="w-4 h-4" />
                           </Link>
-                          <span className="text-xs text-slate-400 font-mono">
-                            /{item.slug}
-                          </span>
+                          <button
+                            onClick={() => setDeletingId(item.id)}
+                            className="p-2 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40"
+                            title="Hapus Materi"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
                         </div>
-                      </div>
-                    </td>
-
-                    {/* Category */}
-                    <td className="px-6 py-4">
-                      {item.kategori ? (
-                        <Badge variant="brand" size="sm">
-                          {item.kategori.nama}
-                        </Badge>
-                      ) : (
-                        <span className="text-xs text-slate-400 italic">Tanpa Kategori</span>
-                      )}
-                    </td>
-
-                    {/* Attachments */}
-                    <td className="px-6 py-4">
-                      {item.files && item.files.length > 0 ? (
-                        <div className="flex items-center gap-1 text-xs text-slate-600 dark:text-slate-300 font-semibold">
-                          <FileText className="w-3.5 h-3.5 text-brand-500" />
-                          <span>{item.files.length} file</span>
-                        </div>
-                      ) : (
-                        <span className="text-xs text-slate-400">-</span>
-                      )}
-                    </td>
-
-                    {/* Status */}
-                    <td className="px-6 py-4">
-                      {item.status === 'published' ? (
-                        <Badge variant="brand" size="sm">Tayang</Badge>
-                      ) : (
-                        <Badge variant="secondary" size="sm">Draf</Badge>
-                      )}
-                    </td>
-
-                    {/* Date */}
-                    <td className="px-6 py-4 text-xs text-slate-400">
-                      {formatDate(item.created_at)}
-                    </td>
-
-                    {/* Actions */}
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end gap-1.5">
-                        <Link
-                          to={`/materi/${item.slug}`}
-                          target="_blank"
-                          className="p-2 rounded-lg text-slate-400 hover:text-brand-600 hover:bg-slate-100 dark:hover:bg-slate-800"
-                          title="Lihat Pratinjau Publik"
-                        >
-                          <Eye className="w-4 h-4" />
-                        </Link>
-                        <Link
-                          to={`/admin/materi/edit/${item.id}`}
-                          className="p-2 rounded-lg text-slate-600 hover:text-brand-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
-                          title="Edit Materi"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Link>
-                        <button
-                          onClick={() => setDeletingId(item.id)}
-                          className="p-2 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40"
-                          title="Hapus Materi"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>

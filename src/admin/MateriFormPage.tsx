@@ -15,10 +15,13 @@ import {
   Cloud,
   ExternalLink,
   Sparkles,
+  Tag as TagIcon,
+  X,
 } from 'lucide-react';
 import { useMateri } from '../hooks/useMateri';
 import { useCategories } from '../hooks/useCategories';
-import { MateriPAI, MateriFile } from '../types/database';
+import { useTags } from '../hooks/useTags';
+import { MateriPAI, MateriFile, Tag } from '../types/database';
 import { uploadImage, uploadMateriFile } from '../lib/supabase';
 import { slugify, formatBytes, getFileBadgeColor } from '../lib/utils';
 import { parseCloudEmbedUrl } from '../lib/embedHelper';
@@ -35,6 +38,7 @@ export const MateriFormPage: React.FC = () => {
   const navigate = useNavigate();
   const { materiList, createMateri, updateMateri, isCreating, isUpdating } = useMateri({ status: 'all' });
   const { categories } = useCategories();
+  const { tags, createTag } = useTags();
   const { success, error: toastError } = useToast();
 
   const [judul, setJudul] = useState('');
@@ -44,7 +48,9 @@ export const MateriFormPage: React.FC = () => {
   const [gambarCoverUrl, setGambarCoverUrl] = useState('');
   const [kategoriId, setKategoriId] = useState<string>('');
   const [status, setStatus] = useState<'published' | 'draft'>('published');
-  
+  const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
+  const [newTagInput, setNewTagInput] = useState('');
+
   const [files, setFiles] = useState<Array<{
     nama_file: string;
     file_url: string;
@@ -77,6 +83,9 @@ export const MateriFormPage: React.FC = () => {
         setGambarCoverUrl(existing.gambar_cover_url || '');
         setKategoriId(existing.kategori_id || '');
         setStatus(existing.status);
+        if (existing.tags) {
+          setSelectedTagIds(existing.tags.map((t) => t.id));
+        }
         if (existing.files) {
           setFiles(
             existing.files.map((f) => ({
@@ -176,6 +185,25 @@ export const MateriFormPage: React.FC = () => {
     setCloudModalOpen(false);
   };
 
+  const handleToggleTag = (tagId: string) => {
+    setSelectedTagIds((prev) =>
+      prev.includes(tagId) ? prev.filter((id) => id !== tagId) : [...prev, tagId]
+    );
+  };
+
+  const handleAddNewTag = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newTagInput.trim()) return;
+    try {
+      const created = await createTag(newTagInput.trim());
+      setSelectedTagIds((prev) => [...prev, created.id]);
+      setNewTagInput('');
+      success(`Tag #${created.nama} berhasil dibuat!`);
+    } catch {
+      toastError('Gagal membuat tag baru.');
+    }
+  };
+
   const handleRemoveFile = (index: number) => {
     setFiles((prev) => prev.filter((_, idx) => idx !== index));
   };
@@ -186,6 +214,8 @@ export const MateriFormPage: React.FC = () => {
       toastError('Judul materi wajib diisi.');
       return;
     }
+
+    const selectedTags = tags.filter((t) => selectedTagIds.includes(t.id));
 
     try {
       if (isEdit && id) {
@@ -199,6 +229,7 @@ export const MateriFormPage: React.FC = () => {
             gambar_cover_url: gambarCoverUrl,
             kategori_id: kategoriId || null,
             status,
+            tags: selectedTags,
           },
           files,
         });
@@ -213,6 +244,7 @@ export const MateriFormPage: React.FC = () => {
             gambar_cover_url: gambarCoverUrl,
             kategori_id: kategoriId || null,
             status,
+            tags: selectedTags,
           },
           files,
         });
@@ -230,7 +262,11 @@ export const MateriFormPage: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <Link to="/admin/materi">
-            <button className="p-2 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800">
+            <button
+              type="button"
+              aria-label="Kembali ke daftar materi"
+              className="p-2 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+            >
               <ArrowLeft className="w-4 h-4" />
             </button>
           </Link>
@@ -239,7 +275,7 @@ export const MateriFormPage: React.FC = () => {
               {isEdit ? 'Edit Materi PAI' : 'Tulis Modul / Artikel PAI Baru'}
             </h1>
             <p className="text-xs text-slate-500">
-              Isi materi pembelajaran terstruktur, upload lampiran PDF/PPT atau lampirkan link Google Drive/OneDrive.
+              Isi materi pembelajaran terstruktur, lampirkan link Google Drive/OneDrive, dan kelola tag topik.
             </p>
           </div>
         </div>
@@ -442,7 +478,7 @@ export const MateriFormPage: React.FC = () => {
             </Card>
           </div>
 
-          {/* Sidebar Column (4 cols): Meta, Categories & Settings */}
+          {/* Sidebar Column (4 cols): Meta, Categories, Tags & Settings */}
           <div className="lg:col-span-4 space-y-6">
             
             {/* Publish & Status Card */}
@@ -518,9 +554,58 @@ export const MateriFormPage: React.FC = () => {
                       );
                     })}
                 </select>
-                <p className="text-[11px] text-slate-400">
-                  Pilih elemen pembelajaran PAI sesuai tingkatan kelas (Fase D).
-                </p>
+              </div>
+            </Card>
+
+            {/* Tag Selection & Creation Card (Phase 2) */}
+            <Card className="p-6 space-y-4 bg-white dark:bg-slate-900">
+              <div className="flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
+                <TagIcon className="w-4 h-4 text-emerald-600" />
+                <h3 className="font-display font-bold text-sm text-slate-900 dark:text-white">
+                  Tag & Topik Terkait ({selectedTagIds.length} Terpilih)
+                </h3>
+              </div>
+
+              <div className="flex flex-wrap gap-1.5">
+                {tags.map((tag) => {
+                  const isSelected = selectedTagIds.includes(tag.id);
+                  return (
+                    <button
+                      key={tag.id}
+                      type="button"
+                      onClick={() => handleToggleTag(tag.id)}
+                      className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors ${
+                        isSelected
+                          ? 'bg-brand-600 text-white shadow-xs'
+                          : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
+                      }`}
+                    >
+                      #{tag.nama}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Inline Create New Tag */}
+              <div className="pt-2">
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={newTagInput}
+                    onChange={(e) => setNewTagInput(e.target.value)}
+                    placeholder="Nama tag baru..."
+                    className="flex-1 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-1.5 text-xs"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleAddNewTag}
+                    className="text-xs"
+                  >
+                    + Tag
+                  </Button>
+                </div>
               </div>
             </Card>
 
