@@ -1,0 +1,18 @@
+name: Supabase Free Tier Keep-Alive Ping
+
+on:
+  schedule:
+    # Berjalan otomatis setiap 3 hari sekali
+    - cron: '0 0 */3 * *'
+  workflow_dispatch: # Memungkinkan tombol run manual jika ingin tes
+
+jobs:
+  ping-supabase:
+    name: Ping Supabase Database Endpoint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase REST Health Endpoint
+        run: |
+          echo "Sending keep-alive ping to Supabase project..."
+          curl -I -s -o /dev/null -w "HTTP Response Code: %{http_code}\n" https://xxeegyireqgxshtazkzh.supabase.co/rest/v1/
+          echo "Supabase keep-alive ping executed successfully!"
