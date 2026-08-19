@@ -22,6 +22,7 @@ import {
   ListPlus,
   Layers,
   Search,
+  Check,
 } from 'lucide-react';
 import { useEbook } from '../hooks/useEbook';
 import { EBook, EBookFormat } from '../types/database';
@@ -37,6 +38,33 @@ import { uploadEbookFile, uploadImage } from '../lib/supabase';
 const R2_DOMAIN_STORAGE_KEY = 'aji_pai_r2_domain';
 const DEFAULT_R2_DOMAIN = 'https://pub-d494b67231904a24a45db5300095094f.r2.dev';
 
+export const CATEGORY_PRESETS = [
+  'Novel & Sastra Fiksi',
+  'Modul Kurikulum Merdeka',
+  'Fikih Syafi\'i',
+  'Hadits Ahkam',
+  'Al-Qur\'an & Tafsir',
+  'Sejarah & Sirah Nabawiyah',
+  'Akidah & Akhlak',
+  'Tasawuf & Hikmah',
+  'Gramatika Bahasa Arab',
+  'Pengembangan Diri & Motivasi',
+  'Sains & Teknologi',
+  'Umum & Literasi',
+];
+
+interface ParsedSyncItem {
+  id: string;
+  judul: string;
+  penulis: string;
+  kategori: string;
+  format: EBookFormat;
+  fileUrl: string;
+  coverUrl: string;
+  bahasa: string;
+  isDuplicate: boolean;
+}
+
 export const EbookManager: React.FC = () => {
   const { ebookList, createEbook, updateEbook, deleteEbook, seedEbooks, isSeeding, isLoading } = useEbook();
   const { success, error: toastError } = useToast();
@@ -51,16 +79,7 @@ export const EbookManager: React.FC = () => {
     return localStorage.getItem(R2_DOMAIN_STORAGE_KEY) || DEFAULT_R2_DOMAIN;
   });
   const [rawFilesInput, setRawFilesInput] = useState('');
-  const [parsedSyncItems, setParsedSyncItems] = useState<Array<{
-    judul: string;
-    penulis: string;
-    kategori: string;
-    format: EBookFormat;
-    fileUrl: string;
-    coverUrl: string;
-    bahasa: string;
-    isDuplicate: boolean;
-  }>>([]);
+  const [parsedSyncItems, setParsedSyncItems] = useState<ParsedSyncItem[]>([]);
   const [isSyncing, setIsSyncing] = useState(false);
 
   // Upload progress states
@@ -71,7 +90,7 @@ export const EbookManager: React.FC = () => {
   const [judul, setJudul] = useState('');
   const [penulis, setPenulis] = useState('');
   const [penerbit, setPenerbit] = useState('');
-  const [kategori, setKategori] = useState('Fikih Syafi\'i');
+  const [kategori, setKategori] = useState('Novel & Sastra Fiksi');
   const [deskripsi, setDeskripsi] = useState('');
   const [coverUrl, setCoverUrl] = useState('');
   const [formatFile, setFormatFile] = useState<EBookFormat>('epub');
@@ -89,7 +108,7 @@ export const EbookManager: React.FC = () => {
     setJudul('');
     setPenulis('Aji Bagus Khoiri, S.Pd., Gr.');
     setPenerbit('');
-    setKategori('Fikih Syafi\'i');
+    setKategori('Modul Kurikulum Merdeka');
     setDeskripsi('');
     setCoverUrl('https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=600&q=80');
     setFormatFile('epub');
@@ -237,7 +256,7 @@ export const EbookManager: React.FC = () => {
     }
   };
 
-  // Helper: Parse Cloudflare R2 input lines into structured books
+  // Helper: Smart metadata extraction from filenames & author heuristics
   const handleParseR2Files = () => {
     if (!rawFilesInput.trim()) {
       toastError('Mohon masukkan nama file atau URL buku dari Cloudflare R2.');
@@ -252,63 +271,185 @@ export const EbookManager: React.FC = () => {
       .map((l) => l.trim())
       .filter((l) => Boolean(l));
 
-    const results = lines.map((line) => {
-      // Clean filename or full url
+    const results: ParsedSyncItem[] = lines.map((line, idx) => {
       let fileName = line;
       if (fileName.startsWith('http://') || fileName.startsWith('https://')) {
         fileName = decodeURIComponent(fileName.substring(fileName.lastIndexOf('/') + 1));
       }
 
-      // Detect format extension
+      // Format detection
       const extMatch = fileName.match(/\.([a-zA-Z0-9]+)$/);
       const ext = (extMatch ? extMatch[1].toLowerCase() : 'epub') as EBookFormat;
       const validFormat: EBookFormat = ['epub', 'pdf', 'mobi', 'azw3'].includes(ext) ? ext : 'epub';
 
-      // Clean name for title (handles spaces, underscores, and dashes)
+      // Clean base name
       const baseName = decodeURIComponent(fileName).replace(/\.[^/.]+$/, '');
-      const cleanTitle = baseName
-        .replace(/[_-]+/g, ' ')
-        .replace(/\s+/g, ' ')
+      let rawTitle = baseName.replace(/[_]+/g, ' ').replace(/\s+/g, ' ').trim();
+
+      // Author & Title Smart Splitting (e.g. "Tere Liye - Bumi" or "Atomic Habits by James Clear")
+      let detectedAuthor = 'Aji Bagus Khoiri, S.Pd., Gr.';
+      let detectedTitle = rawTitle;
+
+      if (rawTitle.includes(' - ')) {
+        const parts = rawTitle.split(' - ');
+        if (parts.length >= 2) {
+          detectedAuthor = parts[0].trim();
+          detectedTitle = parts.slice(1).join(' - ').trim();
+        }
+      } else if (rawTitle.toLowerCase().includes(' by ')) {
+        const parts = rawTitle.split(/ by /i);
+        if (parts.length >= 2) {
+          detectedTitle = parts[0].trim();
+          detectedAuthor = parts[1].trim();
+        }
+      }
+
+      // Capitalize Title nicely
+      detectedTitle = detectedTitle
         .split(' ')
         .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
         .join(' ');
 
-      // Build full R2 direct URL (properly encoding spaces for web URLs)
+      // Build full R2 direct URL
       const fullUrl = line.startsWith('http')
         ? line
         : `${domain}/${encodeURIComponent(fileName.trim())}`;
 
-      // Category detection
-      let detectedCategory = 'Fikih Syafi\'i';
-      const lower = cleanTitle.toLowerCase();
-      if (lower.includes('modul') || lower.includes('ajar') || lower.includes('fase d') || lower.includes('smp')) {
+      // Smart Category Heuristic Detection
+      const lower = `${fileName} ${detectedTitle} ${detectedAuthor}`.toLowerCase();
+      let detectedCategory = 'Umum & Literasi'; // Default general, NOT Fikih!
+
+      if (
+        lower.includes('novel') ||
+        lower.includes('cerpen') ||
+        lower.includes('fiksi') ||
+        lower.includes('puisi') ||
+        lower.includes('tere liye') ||
+        lower.includes('tereliye') ||
+        lower.includes('dilan') ||
+        lower.includes('milea') ||
+        lower.includes('habiburrahman') ||
+        lower.includes('ayat cinta') ||
+        lower.includes('laskar pelangi') ||
+        lower.includes('mariposa') ||
+        lower.includes('laut bercerita') ||
+        lower.includes('bumi') ||
+        lower.includes('bulan') ||
+        lower.includes('matahari') ||
+        lower.includes('bintang') ||
+        lower.includes('hujan') ||
+        lower.includes('senja') ||
+        lower.includes('rindu') ||
+        lower.includes('pulang') ||
+        lower.includes('pergi')
+      ) {
+        detectedCategory = 'Novel & Sastra Fiksi';
+      } else if (
+        lower.includes('modul') ||
+        lower.includes('ajar') ||
+        lower.includes('kurikulum') ||
+        lower.includes('merdeka') ||
+        lower.includes('fase d') ||
+        lower.includes('fase e') ||
+        lower.includes('fase a') ||
+        lower.includes('smp') ||
+        lower.includes('sma') ||
+        lower.includes('lkpd') ||
+        lower.includes('pai')
+      ) {
         detectedCategory = 'Modul Kurikulum Merdeka';
-      } else if (lower.includes('hadits') || lower.includes('hadis') || lower.includes('maram') || lower.includes('arbain')) {
+      } else if (
+        lower.includes('fikih') ||
+        lower.includes('fiqh') ||
+        lower.includes('fathul') ||
+        lower.includes('safinah') ||
+        lower.includes('taqrib') ||
+        lower.includes('ghayah') ||
+        lower.includes('minhaj') ||
+        lower.includes('matan') ||
+        lower.includes('bajuri') ||
+        lower.includes('sulam')
+      ) {
+        detectedCategory = 'Fikih Syafi\'i';
+      } else if (
+        lower.includes('hadits') ||
+        lower.includes('hadis') ||
+        lower.includes('bukhari') ||
+        lower.includes('muslim') ||
+        lower.includes('maram') ||
+        lower.includes('arbain') ||
+        lower.includes('riyadhus')
+      ) {
         detectedCategory = 'Hadits Ahkam';
-      } else if (lower.includes('akidah') || lower.includes('tauhid') || lower.includes('iman')) {
+      } else if (
+        lower.includes('tafsir') ||
+        lower.includes('quran') ||
+        lower.includes('qur\'an') ||
+        lower.includes('tajwid') ||
+        lower.includes('jalalain') ||
+        lower.includes('katsir')
+      ) {
+        detectedCategory = 'Al-Qur\'an & Tafsir';
+      } else if (
+        lower.includes('sirah') ||
+        lower.includes('tarikh') ||
+        lower.includes('sejarah') ||
+        lower.includes('nabawiyah') ||
+        lower.includes('sahabat')
+      ) {
+        detectedCategory = 'Sejarah & Sirah Nabawiyah';
+      } else if (
+        lower.includes('akidah') ||
+        lower.includes('tauhid') ||
+        lower.includes('iman') ||
+        lower.includes('akhlak')
+      ) {
         detectedCategory = 'Akidah & Akhlak';
-      } else if (lower.includes('tasawuf') || lower.includes('ihya') || lower.includes('hikam')) {
-        detectedCategory = 'Tasawuf & Akhlak';
-      } else if (lower.includes('nahwu') || lower.includes('sharaf') || lower.includes('jurumiyyah')) {
+      } else if (
+        lower.includes('tasawuf') ||
+        lower.includes('ihya') ||
+        lower.includes('hikam') ||
+        lower.includes('ghazali')
+      ) {
+        detectedCategory = 'Tasawuf & Hikmah';
+      } else if (
+        lower.includes('nahwu') ||
+        lower.includes('sharaf') ||
+        lower.includes('jurumiyyah') ||
+        lower.includes('imrithi') ||
+        lower.includes('alfiyyah')
+      ) {
         detectedCategory = 'Gramatika Bahasa Arab';
+      } else if (
+        lower.includes('habits') ||
+        lower.includes('atomic') ||
+        lower.includes('psikologi') ||
+        lower.includes('mindset') ||
+        lower.includes('sukses') ||
+        lower.includes('finansial')
+      ) {
+        detectedCategory = 'Pengembangan Diri & Motivasi';
       }
 
       // Check duplicate against existing list
       const isDuplicate = ebookList.some(
-        (eb) => eb.file_url === fullUrl || eb.judul.toLowerCase() === cleanTitle.toLowerCase()
+        (eb) => eb.file_url === fullUrl || eb.judul.toLowerCase() === detectedTitle.toLowerCase()
       );
 
-      // Cover image preset
+      // Cover image preset based on category
       let cover = 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=600&q=80';
-      if (detectedCategory === 'Modul Kurikulum Merdeka') {
-        cover = 'https://images.unsplash.com/photo-1532012164546-f432f2e3edd4?auto=format&fit=crop&w=600&q=80';
-      } else if (detectedCategory === 'Hadits Ahkam') {
+      if (detectedCategory === 'Novel & Sastra Fiksi') {
         cover = 'https://images.unsplash.com/photo-1512820790803-83ca734da794?auto=format&fit=crop&w=600&q=80';
+      } else if (detectedCategory === 'Modul Kurikulum Merdeka') {
+        cover = 'https://images.unsplash.com/photo-1532012164546-f432f2e3edd4?auto=format&fit=crop&w=600&q=80';
+      } else if (detectedCategory === 'Pengembangan Diri & Motivasi') {
+        cover = 'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?auto=format&fit=crop&w=600&q=80';
       }
 
       return {
-        judul: cleanTitle,
-        penulis: 'Aji Bagus Khoiri, S.Pd., Gr.',
+        id: `temp-${idx}-${Date.now()}`,
+        judul: detectedTitle,
+        penulis: detectedAuthor,
         kategori: detectedCategory,
         format: validFormat,
         fileUrl: fullUrl,
@@ -319,14 +460,26 @@ export const EbookManager: React.FC = () => {
     });
 
     setParsedSyncItems(results);
-    success(`Berhasil mendeteksi ${results.length} file buku dari Cloudflare R2!`);
+    success(`Berhasil mendeteksi ${results.length} file buku! Anda dapat mengedit judul, penulis, dan kategori sebelum menyimpan.`);
+  };
+
+  // Modify individual parsed item in table
+  const updateParsedItem = (id: string, field: keyof ParsedSyncItem, val: any) => {
+    setParsedSyncItems((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, [field]: val } : item))
+    );
+  };
+
+  // Remove individual parsed item from queue
+  const removeParsedItem = (id: string) => {
+    setParsedSyncItems((prev) => prev.filter((item) => item.id !== id));
   };
 
   // Batch insert all parsed R2 items
   const handleExecuteBatchSync = async () => {
     const itemsToInsert = parsedSyncItems.filter((item) => !item.isDuplicate);
     if (itemsToInsert.length === 0) {
-      toastError('Semua buku pada daftar sudah ada di database.');
+      toastError('Semua buku pada daftar sudah ada di database atau daftar kosong.');
       return;
     }
 
@@ -340,7 +493,7 @@ export const EbookManager: React.FC = () => {
           penulis_pengarang: item.penulis,
           penerbit_pentahqiq: 'Pustaka PAI Digital',
           kategori: item.kategori,
-          deskripsi: `Koleksi kitab digital ${item.judul} format ${item.format.toUpperCase()} tersinkronisasi via Cloudflare R2.`,
+          deskripsi: `Koleksi buku digital ${item.judul} kategori ${item.kategori} format ${item.format.toUpperCase()} tersinkronisasi via Cloudflare R2.`,
           cover_url: item.coverUrl,
           format_file: item.format,
           file_url: item.fileUrl,
@@ -379,7 +532,7 @@ export const EbookManager: React.FC = () => {
             </h1>
           </div>
           <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-            Kelola buku digital, modul ajar, dan kitab turats dengan opsi <strong>Cloudflare R2, Google Drive, OneDrive, & EPUB Reader</strong>.
+            Kelola novel, buku digital, modul ajar, dan kitab turats dengan opsi <strong>Cloudflare R2, Google Drive, OneDrive, & EPUB Reader</strong>.
           </p>
         </div>
 
@@ -511,21 +664,21 @@ export const EbookManager: React.FC = () => {
         </div>
       )}
 
-      {/* Modal Cloudflare R2 Auto-Sync */}
+      {/* Modal Cloudflare R2 Auto-Sync with Editable Rows */}
       <Modal
         isOpen={syncModalOpen}
         onClose={() => setSyncModalOpen(false)}
-        title="⚡ Sinkronisasi Pustaka Cloudflare R2"
+        title="⚡ Sinkronisasi & Ekstraksi Metadata R2"
         size="xl"
       >
         <div className="space-y-4">
           <div className="p-4 rounded-2xl bg-orange-50/60 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-800 space-y-2">
             <div className="flex items-center gap-2 font-bold text-xs text-orange-800 dark:text-orange-300">
               <Zap className="w-4 h-4 text-orange-500" />
-              <span>Otomatisasi Pustaka dari Bucket R2</span>
+              <span>Ekstraksi Metadata Cerdas (Novel, Sastra, Modul, & Turats)</span>
             </div>
             <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-              Cukup tempelkan daftar nama file buku yang sudah Anda upload di Cloudflare R2 (misal: <code>Matan_Abu_Syuja.epub</code> atau <code>Modul_PAI_Kelas7.pdf</code>). Sistem akan otomatis mengekstrak judul, format, kategori, dan menghubungkannya langsung ke database Supabase Anda!
+              Tempelkan daftar file buku dari Cloudflare R2. Sistem otomatis mengenali <strong>Penulis</strong>, <strong>Judul Asli</strong>, dan <strong>Kategori yang Tepat</strong> (Novel, Modul Ajar, Fikih, Hadits, dll). Anda juga bisa langsung mengeditnya pada tabel pratinjau sebelum disimpan!
             </p>
           </div>
 
@@ -542,14 +695,14 @@ export const EbookManager: React.FC = () => {
                 Daftar Nama File di R2 (Satu nama file per baris)
               </label>
               <span className="text-[11px] text-slate-400">
-                Contoh: <code>Matan_Abu_Syuja.epub</code>
+                Contoh: <code>Tere Liye - Bumi.epub</code> atau <code>Matan_Abu_Syuja.epub</code>
               </span>
             </div>
             <textarea
               rows={4}
               value={rawFilesInput}
               onChange={(e) => setRawFilesInput(e.target.value)}
-              placeholder="Matan_Abu_Syuja.epub&#10;Modul_Ajar_PAI_Fase_D.pdf&#10;Bulughul_Maram.mobi&#10;Safinatun_Naja.epub"
+              placeholder="Tere Liye - Bumi.epub&#10;Dilan 1990 by Pidi Baiq.epub&#10;Modul_Ajar_PAI_Fase_D.pdf&#10;Matan_Abu_Syuja.epub&#10;Atomic Habits by James Clear.epub"
               className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 p-3 text-xs font-mono"
             />
           </div>
@@ -557,48 +710,87 @@ export const EbookManager: React.FC = () => {
           <div className="flex justify-end">
             <Button type="button" variant="outline" size="sm" onClick={handleParseR2Files}>
               <Search className="w-3.5 h-3.5 mr-1" />
-              Pindai & Ekstrak Judul
+              Pindai & Ekstrak Metadata
             </Button>
           </div>
 
-          {/* Parsed Preview Table */}
+          {/* Parsed Interactive Editable Preview Table */}
           {parsedSyncItems.length > 0 && (
             <div className="space-y-3 pt-2 border-t border-slate-200 dark:border-slate-800">
               <div className="flex items-center justify-between">
                 <h4 className="text-xs font-bold text-slate-800 dark:text-slate-200">
-                  Hasil Pindaian ({parsedSyncItems.length} Buku):
+                  Hasil Ekstraksi Metadata ({parsedSyncItems.length} Buku):
                 </h4>
                 <span className="text-[11px] text-slate-400">
-                  {parsedSyncItems.filter((i) => !i.isDuplicate).length} baru • {parsedSyncItems.filter((i) => i.isDuplicate).length} sudah ada
+                  {parsedSyncItems.filter((i) => !i.isDuplicate).length} siap diimpor • {parsedSyncItems.filter((i) => i.isDuplicate).length} duplikat
                 </span>
               </div>
 
-              <div className="max-h-60 overflow-y-auto rounded-xl border border-slate-200 dark:border-slate-800 divide-y divide-slate-100 dark:divide-slate-800 text-xs">
-                {parsedSyncItems.map((item, idx) => (
-                  <div key={idx} className="p-3 flex items-center justify-between gap-3 bg-white dark:bg-slate-900">
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase bg-slate-100 dark:bg-slate-800">
-                        {item.format}
-                      </span>
-                      <div className="min-w-0">
-                        <p className="font-bold text-slate-900 dark:text-white truncate">{item.judul}</p>
-                        <p className="text-[10px] text-slate-400 font-mono truncate">{item.fileUrl}</p>
+              <div className="max-h-72 overflow-y-auto rounded-xl border border-slate-200 dark:border-slate-800 divide-y divide-slate-100 dark:divide-slate-800 text-xs">
+                {parsedSyncItems.map((item) => (
+                  <div key={item.id} className="p-3 bg-white dark:bg-slate-900 space-y-2.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase bg-purple-100 dark:bg-purple-950/60 text-purple-600">
+                          {item.format}
+                        </span>
+                        {item.isDuplicate ? (
+                          <span className="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 text-[10px] font-bold">
+                            Sudah Ada
+                          </span>
+                        ) : (
+                          <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 text-[10px] font-bold">
+                            Siap Diimpor
+                          </span>
+                        )}
                       </div>
+
+                      <button
+                        type="button"
+                        onClick={() => removeParsedItem(item.id)}
+                        className="text-red-500 hover:text-red-600 p-1 rounded hover:bg-red-50 dark:hover:bg-red-950/50"
+                        title="Hapus dari daftar impor"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
                     </div>
 
-                    <div className="shrink-0 flex items-center gap-2">
-                      <span className="text-[10px] text-brand-600 dark:text-brand-400 font-semibold">
-                        {item.kategori}
-                      </span>
-                      {item.isDuplicate ? (
-                        <span className="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 text-[10px] font-bold">
-                          Sudah Ada
-                        </span>
-                      ) : (
-                        <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 text-[10px] font-bold">
-                          Siap Diimpor
-                        </span>
-                      )}
+                    {/* In-Table Editable Inputs */}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                      <div>
+                        <label className="text-[10px] font-semibold text-slate-500 block mb-0.5">Judul Buku</label>
+                        <input
+                          type="text"
+                          value={item.judul}
+                          onChange={(e) => updateParsedItem(item.id, 'judul', e.target.value)}
+                          className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-2.5 py-1 text-xs font-bold text-slate-900 dark:text-white"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-[10px] font-semibold text-slate-500 block mb-0.5">Penulis / Pengarang</label>
+                        <input
+                          type="text"
+                          value={item.penulis}
+                          onChange={(e) => updateParsedItem(item.id, 'penulis', e.target.value)}
+                          className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-2.5 py-1 text-xs text-slate-800 dark:text-slate-200"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-[10px] font-semibold text-slate-500 block mb-0.5">Kategori</label>
+                        <select
+                          value={item.kategori}
+                          onChange={(e) => updateParsedItem(item.id, 'kategori', e.target.value)}
+                          className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-2 py-1 text-xs font-semibold text-brand-600 dark:text-brand-400"
+                        >
+                          {CATEGORY_PRESETS.map((cat) => (
+                            <option key={cat} value={cat}>
+                              {cat}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -634,11 +826,11 @@ export const EbookManager: React.FC = () => {
       >
         <form onSubmit={handleSave} className="space-y-4">
           <Input
-            label="Judul E-Book / Kitab"
+            label="Judul E-Book / Kitab / Novel"
             required
             value={judul}
             onChange={(e) => setJudul(e.target.value)}
-            placeholder="Contoh: Matan Al-Ghayah wa At-Taqrib"
+            placeholder="Contoh: Bumi (Tere Liye) / Matan Al-Ghayah wa At-Taqrib"
           />
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -647,14 +839,14 @@ export const EbookManager: React.FC = () => {
               required
               value={penulis}
               onChange={(e) => setPenulis(e.target.value)}
-              placeholder="Contoh: Al-Qadhi Abu Syuja'"
+              placeholder="Contoh: Tere Liye / Al-Qadhi Abu Syuja'"
             />
 
             <Input
               label="Penerbit / Pentahqiq / Penerjemah"
               value={penerbit}
               onChange={(e) => setPenerbit(e.target.value)}
-              placeholder="Contoh: Aji Bagus Khoiri, S.Pd., Gr."
+              placeholder="Contoh: Gramedia Pustaka / Aji Bagus Khoiri, S.Pd., Gr."
             />
           </div>
 
@@ -678,15 +870,19 @@ export const EbookManager: React.FC = () => {
 
             <div className="space-y-1.5">
               <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
-                Kategori Keilmuan
+                Kategori Keilmuan / Genre
               </label>
-              <input
-                type="text"
+              <select
                 value={kategori}
                 onChange={(e) => setKategori(e.target.value)}
-                placeholder="Fikih Syafi'i / Modul PAI"
-                className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3.5 py-2 text-sm"
-              />
+                className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3.5 py-2 text-sm font-semibold text-brand-600 dark:text-brand-400"
+              >
+                {CATEGORY_PRESETS.map((cat) => (
+                  <option key={cat} value={cat}>
+                    {cat}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div className="space-y-1.5">
@@ -700,6 +896,7 @@ export const EbookManager: React.FC = () => {
               >
                 <option value="Indonesia">Bahasa Indonesia</option>
                 <option value="Arab">Bahasa Arab</option>
+                <option value="Inggris">Bahasa Inggris</option>
                 <option value="Bilingual">Bilingual (Arab - Indo)</option>
                 <option value="Pegon">Arab Pegon</option>
               </select>
