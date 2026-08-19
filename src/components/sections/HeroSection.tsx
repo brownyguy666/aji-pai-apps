@@ -1,8 +1,8 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { BookOpen, Languages, Sparkles, ArrowRight, Download, Mail, ExternalLink, CheckCircle } from 'lucide-react';
-import { YoutubeIcon, WhatsAppIcon } from '../ui/Icons';
+import { BookOpen, Languages, Mail, CheckCircle } from 'lucide-react';
+import { YoutubeIcon, WhatsAppIcon, InstagramIcon } from '../ui/Icons';
 import { useProfile } from '../../hooks/useProfile';
 import { useMateri } from '../../hooks/useMateri';
 import { useTerjemahan } from '../../hooks/useTerjemahan';
@@ -160,33 +160,66 @@ export const HeroSection: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Social Buttons in Card */}
-                {profile.socials && (
-                  <div className="pt-2 flex justify-center gap-3 border-t border-slate-100 dark:border-slate-800">
-                    {profile.socials.youtube && (
-                      <a
-                        href={profile.socials.youtube}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
-                        title="Channel YouTube"
-                      >
-                        <YoutubeIcon className="w-4 h-4" />
-                      </a>
-                    )}
-                    {profile.socials.whatsapp && (
-                      <a
-                        href={profile.socials.whatsapp}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition-colors"
-                        title="WhatsApp"
-                      >
-                        <WhatsAppIcon className="w-4 h-4" />
-                      </a>
-                    )}
-                  </div>
-                )}
+                {/* Social & Contact Buttons in Card */}
+                <div className="pt-2 flex justify-center items-center gap-2.5 border-t border-slate-100 dark:border-slate-800">
+                  {profile.socials?.youtube && (
+                    <a
+                      href={profile.socials.youtube}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 hover:scale-110 transition-all shadow-sm"
+                      title="Channel YouTube"
+                      aria-label="Kunjungi Channel YouTube"
+                    >
+                      <YoutubeIcon className="w-4 h-4" />
+                    </a>
+                  )}
+
+                  {profile.socials?.instagram && (
+                    <a
+                      href={
+                        profile.socials.instagram.startsWith('http')
+                          ? profile.socials.instagram
+                          : `https://instagram.com/${profile.socials.instagram.replace('@', '')}`
+                      }
+                      target="_blank"
+                      rel="noreferrer"
+                      className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-pink-500 hover:bg-pink-50 dark:hover:bg-pink-950/40 hover:scale-110 transition-all shadow-sm"
+                      title="Instagram"
+                      aria-label="Kunjungi Instagram"
+                    >
+                      <InstagramIcon className="w-4 h-4" />
+                    </a>
+                  )}
+
+                  {profile.socials?.whatsapp && (
+                    <a
+                      href={
+                        profile.socials.whatsapp.startsWith('http')
+                          ? profile.socials.whatsapp
+                          : `https://wa.me/${profile.socials.whatsapp.replace(/[^0-9]/g, '')}`
+                      }
+                      target="_blank"
+                      rel="noreferrer"
+                      className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 hover:scale-110 transition-all shadow-sm"
+                      title="WhatsApp"
+                      aria-label="Kirim Pesan WhatsApp"
+                    >
+                      <WhatsAppIcon className="w-4 h-4" />
+                    </a>
+                  )}
+
+                  {profile.email && (
+                    <a
+                      href={`mailto:${profile.email}`}
+                      className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950/40 hover:scale-110 transition-all shadow-sm"
+                      title={`Email (${profile.email})`}
+                      aria-label="Kirim Email"
+                    >
+                      <Mail className="w-4 h-4" />
+                    </a>
+                  )}
+                </div>
               </div>
             </div>
           </motion.div>
