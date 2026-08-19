@@ -475,11 +475,14 @@ export const EbookManager: React.FC = () => {
             </div>
 
             <Input
-              label="Atau Masukkan Tautan Direct File URL"
+              label="Tautan Direct File / Cloudflare R2 URL (EPUB / PDF / MOBI)"
               value={fileUrl}
               onChange={(e) => setFileUrl(e.target.value)}
-              placeholder="https://... (URL file publik)"
+              placeholder="Contoh: https://pub-xxxx.r2.dev/buku-matan-taqrib.epub"
             />
+            <p className="text-[11px] text-slate-500 dark:text-slate-400">
+              Mendukung Cloudflare R2 (<code>https://pub-xxx.r2.dev/...</code>), Supabase Storage, atau URL direct download file lainnya.
+            </p>
           </div>
 
           {/* Cover Image Upload & URL */}
