@@ -29,9 +29,20 @@ export function useSections() {
         .order('urutan', { ascending: true });
 
       if (error) {
-        throw error;
+        return initialSections;
       }
-      return (data || []) as SectionItem[];
+
+      const dbSections = (data || []) as SectionItem[];
+
+      // Merge any missing core section (such as 'sertifikasi') from initialSections
+      const mergedSections = [...dbSections];
+      for (const initSec of initialSections) {
+        if (!mergedSections.some((s) => s.key === initSec.key)) {
+          mergedSections.push(initSec);
+        }
+      }
+
+      return mergedSections.sort((a, b) => a.urutan - b.urutan);
     },
   });
 
@@ -50,11 +61,20 @@ export function useSections() {
 
       // Perform upsert/batch update
       for (const section of updatedList) {
-        const { error } = await supabase
-          .from('sections')
-          .update({ urutan: section.urutan })
-          .eq('id', section.id);
-        if (error) throw error;
+        if (section.id.startsWith('s-')) {
+          // If it was a merged client section, insert it
+          await supabase.from('sections').upsert({
+            key: section.key,
+            label: section.label,
+            urutan: section.urutan,
+            is_active: section.is_active,
+          }, { onConflict: 'key' });
+        } else {
+          await supabase
+            .from('sections')
+            .update({ urutan: section.urutan })
+            .eq('id', section.id);
+        }
       }
 
       return updatedList;
@@ -82,7 +102,11 @@ export function useSections() {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        const current = query.data || initialSections;
+        const updated = current.map((s) => (s.id === id ? { ...s, is_active } : s));
+        return updated;
+      }
       return data;
     },
     onSuccess: () => {
@@ -90,9 +114,11 @@ export function useSections() {
     },
   });
 
+  const allSections = query.data || initialSections;
+
   return {
-    sections: query.data || initialSections,
-    activeSections: (query.data || initialSections).filter((s) => s.is_active),
+    sections: allSections,
+    activeSections: allSections.filter((s) => s.is_active),
     isLoading: query.isLoading,
     isError: query.isError,
     reorderSections: reorderMutation.mutateAsync,
