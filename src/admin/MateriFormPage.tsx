@@ -416,17 +416,33 @@ export const MateriFormPage: React.FC = () => {
                 <select
                   value={kategoriId}
                   onChange={(e) => setKategoriId(e.target.value)}
-                  className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3.5 py-2.5 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+                  className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3.5 py-2.5 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-brand-500/20 font-medium"
                 >
-                  <option value="">-- Pilih Kategori --</option>
-                  {categories.map((cat) => (
-                    <option key={cat.id} value={cat.id}>
-                      {cat.parent_id ? `↳ ${cat.nama}` : `[Kelas/Fase] ${cat.nama}`}
-                    </option>
-                  ))}
+                  <option value="">-- Pilih Kategori Elemen --</option>
+                  {categories
+                    .filter((c) => !c.parent_id)
+                    .map((topCat) => {
+                      const childCats = categories.filter((c) => c.parent_id === topCat.id);
+                      if (childCats.length > 0) {
+                        return (
+                          <optgroup key={topCat.id} label={topCat.nama}>
+                            {childCats.map((child) => (
+                              <option key={child.id} value={child.id}>
+                                {child.nama}
+                              </option>
+                            ))}
+                          </optgroup>
+                        );
+                      }
+                      return (
+                        <option key={topCat.id} value={topCat.id}>
+                          {topCat.nama}
+                        </option>
+                      );
+                    })}
                 </select>
                 <p className="text-[11px] text-slate-400">
-                  Kategori dapat dikelola secara hierarki di menu <strong>Kategori Bertingkat</strong>.
+                  Pilih elemen pembelajaran PAI sesuai tingkatan kelas (Fase D).
                 </p>
               </div>
             </Card>

@@ -1,5 +1,16 @@
 import React, { useState } from 'react';
-import { FolderTree, Plus, Edit, Trash2, Layers, Folder, FolderPlus, CheckCircle } from 'lucide-react';
+import {
+  FolderTree,
+  Plus,
+  Edit,
+  Trash2,
+  Layers,
+  Folder,
+  FolderPlus,
+  CheckCircle,
+  Sparkles,
+  RefreshCw,
+} from 'lucide-react';
 import { useCategories } from '../hooks/useCategories';
 import { KategoriMateri } from '../types/database';
 import { Card } from '../components/ui/Card';
@@ -19,6 +30,7 @@ export const KategoriManager: React.FC = () => {
   const [parentId, setParentId] = useState<string>('');
   const [urutan, setUrutan] = useState<number>(1);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [isInitializingFaseD, setIsInitializingFaseD] = useState(false);
 
   const openAddModal = (defaultParentId = '') => {
     setEditingCategory(null);
@@ -34,6 +46,66 @@ export const KategoriManager: React.FC = () => {
     setParentId(cat.parent_id || '');
     setUrutan(cat.urutan || 1);
     setModalOpen(true);
+  };
+
+  const handleInitFaseD = async () => {
+    if (!window.confirm('Inisialisasi struktur Fase D (Kelas 7, 8, 9 dengan 5 elemen)?')) {
+      return;
+    }
+
+    setIsInitializingFaseD(true);
+    try {
+      const classes = [
+        { name: 'Kelas 7 (Fase D)', urutan: 1 },
+        { name: 'Kelas 8 (Fase D)', urutan: 2 },
+        { name: 'Kelas 9 (Fase D)', urutan: 3 },
+      ];
+
+      const elements = [
+        "Al-Qur'an dan Hadis",
+        'Akidah',
+        'Akhlak',
+        'Fikih',
+        'Sejarah Kebudayaan Islam (SKI)',
+      ];
+
+      for (const cls of classes) {
+        // Check if class exists or add it
+        const existingClass = categories.find((c) => c.nama === cls.name && !c.parent_id);
+        let classId = existingClass?.id;
+
+        if (!classId) {
+          const newClass = await addCategory({
+            nama: cls.name,
+            parent_id: null,
+            urutan: cls.urutan,
+          });
+          classId = newClass?.id;
+        }
+
+        if (classId) {
+          for (let i = 0; i < elements.length; i++) {
+            const elemName = elements[i];
+            const hasElem = categories.some(
+              (c) => c.nama === elemName && c.parent_id === classId
+            );
+            if (!hasElem) {
+              await addCategory({
+                nama: elemName,
+                parent_id: classId,
+                urutan: i + 1,
+              });
+            }
+          }
+        }
+      }
+
+      success('Struktur 5 Elemen Fase D (Kelas 7, 8, 9) berhasil diinisialisasi!');
+    } catch (err) {
+      toastError('Gagal menginisialisasi struktur kategori.');
+    } finally {
+      setIsInitializingFaseD(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -97,7 +169,7 @@ export const KategoriManager: React.FC = () => {
               </div>
             )}
             <div>
-              <span className="text-slate-900 dark:text-white">{node.nama}</span>
+              <span className="text-slate-900 dark:text-white font-medium">{node.nama}</span>
               <span className="text-[10px] text-slate-400 font-mono ml-2">
                 (Level {level + 1}, Urutan: {node.urutan})
               </span>
@@ -153,24 +225,36 @@ export const KategoriManager: React.FC = () => {
               <FolderTree className="w-5 h-5" />
             </div>
             <h1 className="text-2xl font-extrabold font-display text-slate-900 dark:text-white">
-              Kategori Bertingkat Materi PAI
+              Struktur Kategori PAI (Fase D)
             </h1>
           </div>
           <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Struktur hierarki materi: <strong>Tingkat Kelas (Fase) ➔ Bidang Keilmuan ➔ Sub-topik Pembahasan</strong>.
+            Hierarki Kurikulum Merdeka: <strong>Kelas (7, 8, 9) ➔ 5 Elemen (Qur'an Hadis, Akidah, Akhlak, Fiqih, SKI) ➔ Sub-topik</strong>.
           </p>
         </div>
 
-        <Button variant="primary" size="md" onClick={() => openAddModal()}>
-          <Plus className="w-4 h-4 mr-1.5" />
-          Tambah Kategori Utama
-        </Button>
+        <div className="flex items-center gap-2 flex-wrap">
+          <Button
+            variant="outline"
+            size="md"
+            onClick={handleInitFaseD}
+            disabled={isInitializingFaseD}
+            className="text-brand-600 dark:text-brand-400"
+          >
+            <Sparkles className="w-4 h-4 mr-1.5" />
+            {isInitializingFaseD ? 'Menginisialisasi...' : 'Inisialisasi 5 Elemen Fase D'}
+          </Button>
+          <Button variant="primary" size="md" onClick={() => openAddModal()}>
+            <Plus className="w-4 h-4 mr-1.5" />
+            Tambah Kategori
+          </Button>
+        </div>
       </div>
 
       {/* Categories Tree View */}
       <Card className="p-6 space-y-4 bg-white dark:bg-slate-900">
-        <h3 className="font-display font-bold text-sm text-slate-900 dark:text-white border-b border-slate-100 dark:border-slate-800 pb-3">
-          Struktur Hierarki Kategori
+        <h3 className="font-display font-bold text-sm text-slate-900 dark:text-white border-b border-slate-100 dark:border-slate-800 pb-3 flex items-center justify-between">
+          <span>Struktur Hierarki Kategori ({categories.length} Kategori)</span>
         </h3>
 
         {isLoading ? (
@@ -197,7 +281,7 @@ export const KategoriManager: React.FC = () => {
             required
             value={nama}
             onChange={(e) => setNama(e.target.value)}
-            placeholder="Contoh: Fiqih Ibadah, Aqidah Akhlak, Kelas X"
+            placeholder="Contoh: Al-Qur'an dan Hadis, Fikih, Kelas 7"
           />
 
           <div className="space-y-1.5">
@@ -214,7 +298,7 @@ export const KategoriManager: React.FC = () => {
                 .filter((c) => !editingCategory || c.id !== editingCategory.id)
                 .map((cat) => (
                   <option key={cat.id} value={cat.id}>
-                    {cat.parent_id ? `↳ ${cat.nama}` : `[Utama] ${cat.nama}`}
+                    {cat.parent_id ? `↳ ${cat.nama}` : `[Kelas] ${cat.nama}`}
                   </option>
                 ))}
             </select>

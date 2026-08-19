@@ -31,59 +31,71 @@ export const initialSections: SectionItem[] = [
 ];
 
 export const initialCategories: KategoriMateri[] = [
-  // Level 1: Kelas
-  { id: 'c1-1', nama: 'Kelas X (Fase E)', parent_id: null, urutan: 1 },
-  { id: 'c1-2', nama: 'Kelas XI (Fase F)', parent_id: null, urutan: 2 },
-  { id: 'c1-3', nama: 'Kelas XII (Fase F+)', parent_id: null, urutan: 3 },
-  // Level 2: Bidang Keilmuan
-  { id: 'c2-1', nama: 'Al-Qur\'an & Hadits', parent_id: 'c1-1', urutan: 1 },
-  { id: 'c2-2', nama: 'Aqidah & Akhlak', parent_id: 'c1-1', urutan: 2 },
-  { id: 'c2-3', nama: 'Fiqih Ibadah & Muamalah', parent_id: 'c1-1', urutan: 3 },
-  { id: 'c2-4', nama: 'Sejarah Kebudayaan Islam (SKI)', parent_id: 'c1-1', urutan: 4 },
-  // Level 3: Sub-topik
-  { id: 'c3-1', nama: 'Tafsir Q.S. Al-Ma\'idah: 48 (Kompetisi Kebaikan)', parent_id: 'c2-1', urutan: 1 },
-  { id: 'c3-2', nama: 'Syu\'abul Iman (Cabang-cabang Iman)', parent_id: 'c2-2', urutan: 2 },
-  { id: 'c3-3', nama: 'Fiqih Mawaris & Pembagian Waris', parent_id: 'c2-3', urutan: 3 },
+  // Level 1: Tingkat Kelas Fase D (SMP)
+  { id: 'c-k7', nama: 'Kelas 7 (Fase D)', parent_id: null, urutan: 1 },
+  { id: 'c-k8', nama: 'Kelas 8 (Fase D)', parent_id: null, urutan: 2 },
+  { id: 'c-k9', nama: 'Kelas 9 (Fase D)', parent_id: null, urutan: 3 },
+
+  // Level 2: 5 Elemen PAI Kelas 7
+  { id: 'c-k7-qurhad', nama: 'Al-Qur\'an dan Hadis', parent_id: 'c-k7', urutan: 1 },
+  { id: 'c-k7-akidah', nama: 'Akidah', parent_id: 'c-k7', urutan: 2 },
+  { id: 'c-k7-akhlak', nama: 'Akhlak', parent_id: 'c-k7', urutan: 3 },
+  { id: 'c-k7-fikih', nama: 'Fikih', parent_id: 'c-k7', urutan: 4 },
+  { id: 'c-k7-ski', nama: 'Sejarah Kebudayaan Islam (SKI)', parent_id: 'c-k7', urutan: 5 },
+
+  // Level 2: 5 Elemen PAI Kelas 8
+  { id: 'c-k8-qurhad', nama: 'Al-Qur\'an dan Hadis', parent_id: 'c-k8', urutan: 1 },
+  { id: 'c-k8-akidah', nama: 'Akidah', parent_id: 'c-k8', urutan: 2 },
+  { id: 'c-k8-akhlak', nama: 'Akhlak', parent_id: 'c-k8', urutan: 3 },
+  { id: 'c-k8-fikih', nama: 'Fikih', parent_id: 'c-k8', urutan: 4 },
+  { id: 'c-k8-ski', nama: 'Sejarah Kebudayaan Islam (SKI)', parent_id: 'c-k8', urutan: 5 },
+
+  // Level 2: 5 Elemen PAI Kelas 9
+  { id: 'c-k9-qurhad', nama: 'Al-Qur\'an dan Hadis', parent_id: 'c-k9', urutan: 1 },
+  { id: 'c-k9-akidah', nama: 'Akidah', parent_id: 'c-k9', urutan: 2 },
+  { id: 'c-k9-akhlak', nama: 'Akhlak', parent_id: 'c-k9', urutan: 3 },
+  { id: 'c-k9-fikih', nama: 'Fikih', parent_id: 'c-k9', urutan: 4 },
+  { id: 'c-k9-ski', nama: 'Sejarah Kebudayaan Islam (SKI)', parent_id: 'c-k9', urutan: 5 },
 ];
 
 export const initialMateri: MateriPAI[] = [
   {
     id: 'm-1',
-    judul: 'Memahami Konsep Fastabiqul Khairat: Kajian Mendalam Q.S. Al-Maidah Ayat 48',
-    slug: 'memahami-konsep-fastabiqul-khairat-al-maidah-48',
-    deskripsi_singkat: 'Kajian tafsir tematik tentang anjuran berlomba-lomba dalam kebaikan, etos kerja islami, dan menjunjung tinggi integritas dalam kehidupan sehari-hari.',
-    konten: `# Memahami Konsep Fastabiqul Khairat (Q.S. Al-Ma'idah: 48)
+    judul: 'Kedudukan Al-Qur\'an dan Sunnah sebagai Sumber Hukum Islam (Kajian Q.S. An-Nisa: 59)',
+    slug: 'kedudukan-alquran-dan-sunnah-sumber-hukum-an-nisa-59',
+    deskripsi_singkat: 'Kajian mendalam tentang kewajiban menaati Allah, Rasul, dan Ulil Amri serta peran Al-Qur\'an dan Hadis sebagai pedoman hidup peserta didik Fase D.',
+    konten: `# Kedudukan Al-Qur'an dan Sunnah sebagai Pedoman Hidup
 
-Dalam era globalisasi yang sarat akan tantangan moral dan kompetisi global, nilai-nilai Al-Qur'an memberikan pedoman yang sangat tegas dan relevan mengenai bagaimana seorang Muslim harus memposisikan dirinya.
+Allah SWT berfirman dalam Al-Qur'an Surah An-Nisa' ayat 59:
 
-> *"Dan Kami telah menurunkan Kitab (Al-Qur'an) kepadamu (Muhammad) dengan membawa kebenaran, yang membenarkan kitab-kitab yang diturunkan sebelumnya dan menjaganya... Maka berlomba-lombalah kamu dalam kebaikan."* (Q.S. Al-Ma'idah [5]: 48)
+> *"Wahai orang-orang yang beriman! Taatilah Allah dan taatilah Rasul (Muhammad), dan Ulil Amri (pemegang kekuasaan) di antara kamu. Kemudian, jika kamu berlainan pendapat tentang sesuatu, maka kembalikanlah ia kepada Allah (Al-Qur'an) dan Rasul (Sunnahnya), jika kamu benar-benar beriman kepada Allah dan hari kemudian. Yang demikian itu lebih utama (bagimu) dan lebih baik akibatnya."* (Q.S. An-Nisa' [4]: 59)
 
-## 1. Makna Etimologis dan Terminologis
-Secara bahasa, **Fastabiqul Khairat** berakar dari kata *sabaqa* yang berarti mendahului atau berlomba, dan *al-khairat* yang merupakan bentuk jamak dari *khair* (kebaikan).
+## 1. Pokok Kandungan Ayat
+- **Ketaatan Mutlak**: Ketaatan kepada Allah SWT dan Rasulullah SAW bersifat mutlak tanpa syarat.
+- **Ketaatan Bersyarat**: Ketaatan kepada ulil amri (pemimpin, guru, orang tua) selama tidak memerintahkan maksiat.
+- **Penyelesaian Masalah**: Mengembalikan segala perselisihan pada tuntunan Al-Qur'an dan Sunnah shahihah.
 
-## 2. Implementasi dalam Pembelajaran
-1. Membiasakan disiplin waktu dalam menuntut ilmu.
-2. Saling membantu dalam memahami materi pelajaran tanpa pamrih.
-3. Menjaga adab terhadap guru dan sesama penuntut ilmu.
-
-Silakan unduh modul ajar dan lembar kerja peserta didik (LKPD) pada lampiran di bawah.`,
+## 2. Refleksi dalam Keseharian Siswa
+1. Menjadikan Al-Qur'an sebagai bacaan rutin harian.
+2. Mencontoh akhlak Rasulullah SAW dalam pergaulan di sekolah dan rumah.
+3. Menghormati guru dan mentaati tata tertib sekolah dengan penuh kesadaran.`,
     gambar_cover_url: 'https://images.unsplash.com/photo-1584551246679-0daf3d275d0f?auto=format&fit=crop&w=1200&q=80',
-    kategori_id: 'c3-1',
+    kategori_id: 'c-k7-qurhad',
     status: 'published',
-    view_count: 428,
+    view_count: 480,
     created_at: '2024-05-10T08:00:00.000Z',
     updated_at: '2024-05-10T08:00:00.000Z',
     kategori: {
-      id: 'c3-1',
-      nama: 'Tafsir Q.S. Al-Ma\'idah: 48',
-      parent_id: 'c2-1',
+      id: 'c-k7-qurhad',
+      nama: 'Al-Qur\'an dan Hadis',
+      parent_id: 'c-k7',
       urutan: 1,
     },
     files: [
       {
         id: 'f-1',
         materi_id: 'm-1',
-        nama_file: 'Modul_Ajar_PAI_Fastabiqul_Khairat_Kelas_X.pdf',
+        nama_file: 'Modul_Ajar_PAI_Kelas7_AlQuran_Hadis_FaseD.pdf',
         file_url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
         tipe: 'pdf',
         ukuran_bytes: 2450000,
@@ -91,47 +103,206 @@ Silakan unduh modul ajar dan lembar kerja peserta didik (LKPD) pada lampiran di 
       {
         id: 'f-2',
         materi_id: 'm-1',
-        nama_file: 'Slide_Presentasi_Tafsir_Al_Maidah_48.pptx',
+        nama_file: 'LKPD_Analisis_Surah_AnNisa_59.docx',
         file_url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
-        tipe: 'ppt',
-        ukuran_bytes: 5820000,
+        tipe: 'word',
+        ukuran_bytes: 1120000,
       },
     ],
   },
   {
     id: 'm-2',
-    judul: 'Menelaah 77 Cabang Iman (Syu\'abul Iman) Berdasarkan Hadits Shahih',
-    slug: 'menelaah-77-cabang-iman-syuabul-iman-hadits-shahih',
-    deskripsi_singkat: 'Penjelasan komprehensif mengenai dimensi keimanan: pembenaran hati, lisan, dan amal perbuatan dalam kehidupan muslim.',
-    konten: `# Menelaah 77 Cabang Iman (Syu'abul Iman)
+    judul: 'Meneladani Asmaul Husna dalam Keseharian: Al-\'Alim, Al-Khabir, As-Sami\', dan Al-Bashir',
+    slug: 'meneladani-asmaul-husna-al-alim-al-khabir-as-sami-al-bashir',
+    deskripsi_singkat: 'Memahami hakikat empat Asmaul Husna pilihan dan bagaimana menumbuhkan sifat jujur, cermat, serta berakhlak mulia di bawah pengawasan Allah.',
+    konten: `# Meneladani Asmaul Husna (Al-'Alim, Al-Khabir, As-Sami', Al-Bashir)
 
-Rasulullah SAW bersabda:
-> *"Iman itu memiliki tujuh puluh lebih cabang. Yang paling utama adalah ucapan Laa Ilaaha Illallaah, dan yang paling rendah adalah menyingkirkan duri dari jalan. Dan malu adalah sebagian dari iman."* (HR. Muslim)
+Mengenal Allah SWT melalui nama-nama-Nya yang agung adalah landasan utama pembentukan karakter (*akhlakul karimah*) peserta didik.
 
-## Pilar Utama Iman:
-- **Ma'rifatun bil Qalb**: Mengenal Allah dan rukun iman dengan keyakinan kokoh.
-- **Iqrarun bil Lisan**: Mengucapkan syahadat, dzikir, dan kalam yang bermanfaat.
-- **'Amalun bil Arkan**: Mengamalkan syariat dalam perilaku nyata.`,
+## 4 Asmaul Husna dan Maknanya:
+- **Al-'Alim (Yang Maha Mengetahui)**: Mengetahui segala yang tampak dan tersembunyi.
+- **Al-Khabir (Yang Maha Teliti/Waspada)**: Mengetahui hingga ke rincian terdalam setiap perkara.
+- **As-Sami' (Yang Maha Mendengar)**: Mendengar segala suara, rintihan, dan doa hamba-Nya.
+- **Al-Bashir (Yang Maha Melihat)**: Melihat setiap gerak-gerik perbuatan manusia di manapun berada.
+
+## Sikap yang Harus Dimiliki:
+1. Semangat belajar tiada henti (meneladani *Al-'Alim*).
+2. Teliti dan cermat dalam menyelesaikan tugas (meneladani *Al-Khabir*).
+3. Menjaga lisan dari perkataan kotor dan ghibah (menyadari sifat *As-Sami'*).
+4. Menjauhi perbuatan dosa meskipun dalam keadaan sunyi (menyadari sifat *Al-Bashir*).`,
     gambar_cover_url: 'https://images.unsplash.com/photo-1542816417-0983c9c9ad53?auto=format&fit=crop&w=1200&q=80',
-    kategori_id: 'c3-2',
+    kategori_id: 'c-k7-akidah',
     status: 'published',
-    view_count: 312,
+    view_count: 365,
     created_at: '2024-04-20T08:00:00.000Z',
     updated_at: '2024-04-20T08:00:00.000Z',
     kategori: {
-      id: 'c3-2',
-      nama: 'Syu\'abul Iman',
-      parent_id: 'c2-2',
+      id: 'c-k7-akidah',
+      nama: 'Akidah',
+      parent_id: 'c-k7',
       urutan: 2,
     },
     files: [
       {
         id: 'f-3',
         materi_id: 'm-2',
-        nama_file: 'LKPD_Syuabul_Iman_Kelas_X.docx',
+        nama_file: 'Bahan_Ajar_Asmaul_Husna_Kelas7.pdf',
         file_url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
-        tipe: 'word',
-        ukuran_bytes: 1240000,
+        tipe: 'pdf',
+        ukuran_bytes: 1840000,
+      },
+    ],
+  },
+  {
+    id: 'm-3',
+    judul: 'Tata Cara dan Hikmah Sujud Sahwi, Sujud Tilawah, dan Sujud Syukur',
+    slug: 'panduan-sujud-sahwi-tilawah-syukur-kelas-7',
+    deskripsi_singkat: 'Panduan fikih praktis bersuci dan sujud di luar rukun salat biasa, lengkap dengan bacaan doa, syarat sah, serta sebab-sebab disyariatkannya.',
+    konten: `# Panduan Lengkap Sujud Sahwi, Tilawah, dan Syukur
+
+Sujud merupakan simbol kepasrahan tertinggi seorang hamba kepada Sang Pencipta.
+
+## 1. Sujud Sahwi
+Dilakukan ketika lupa atau ragu-ragu dalam bilangan rakaat salat, atau meninggalkan sunnah ab'adh. Dilakukan 2 kali sujud sebelum atau sesudah salam.
+
+## 2. Sujud Tilawah
+Dilakukan ketika mendengar atau membaca ayat-ayat sajdah dalam Al-Qur'an.
+
+## 3. Sujud Syukur
+Dilakukan spontan ketika mendapatkan kenikmatan besar atau terhindar dari marabahaya. Dilakukan di luar salat dengan 1 kali sujud.`,
+    gambar_cover_url: 'https://images.unsplash.com/photo-1564769625905-50e93615e769?auto=format&fit=crop&w=1200&q=80',
+    kategori_id: 'c-k7-fikih',
+    status: 'published',
+    view_count: 512,
+    created_at: '2024-03-15T08:00:00.000Z',
+    updated_at: '2024-03-15T08:00:00.000Z',
+    kategori: {
+      id: 'c-k7-fikih',
+      nama: 'Fikih',
+      parent_id: 'c-k7',
+      urutan: 4,
+    },
+    files: [
+      {
+        id: 'f-4',
+        materi_id: 'm-3',
+        nama_file: 'Lembar_Praktik_Ibadah_Sujud_Kelas7.pdf',
+        file_url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
+        tipe: 'pdf',
+        ukuran_bytes: 1420000,
+      },
+    ],
+  },
+  {
+    id: 'm-4',
+    judul: 'Membangun Kepedulian Sosial Melalui Zakat, Infak, dan Sedekah (Kelas 8)',
+    slug: 'fikih-zakat-infak-sedekah-kelas-8-smp',
+    deskripsi_singkat: 'Kajian fikih muamalah dan ibadah maliyah: perbedaan zakat fitrah, zakat mal, infak, sedekah, serta dampaknya bagi keadilan sosial.',
+    konten: `# Fikih Zakat, Infak, dan Sedekah (Kelas 8 Fase D)
+
+Islam mengajarkan keseimbangan antara hubungan vertikal kepada Allah (*Hablum minallah*) dan hubungan horizontal kepada sesama manusia (*Hablum minannas*).
+
+## Pembeda Utama:
+- **Zakat**: Wajib dengan nisab, haul, dan kadar tertentu (misal zakat fitrah & zakat emas/perdagangan).
+- **Infak**: Mengeluarkan sebagian harta untuk kemaslahatan umum tanpa batasan nisab.
+- **Sedekah**: Amal kebaikan mencakup materi maupun non-materi (senyuman, pertolongan, ilmu yang bermanfaat).`,
+    gambar_cover_url: 'https://images.unsplash.com/photo-1593113598332-cd288d649433?auto=format&fit=crop&w=1200&q=80',
+    kategori_id: 'c-k8-fikih',
+    status: 'published',
+    view_count: 410,
+    created_at: '2024-02-18T08:00:00.000Z',
+    updated_at: '2024-02-18T08:00:00.000Z',
+    kategori: {
+      id: 'c-k8-fikih',
+      nama: 'Fikih',
+      parent_id: 'c-k8',
+      urutan: 4,
+    },
+    files: [
+      {
+        id: 'f-5',
+        materi_id: 'm-4',
+        nama_file: 'Modul_Ajar_PAI_Zakat_Infak_Sedekah_Kelas8.pdf',
+        file_url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
+        tipe: 'pdf',
+        ukuran_bytes: 2980000,
+      },
+    ],
+  },
+  {
+    id: 'm-5',
+    judul: 'Meneladani Jejak Keemasan Daulah Abbasiyah: Baitul Hikmah dan Perkembangan Sains Islam (Kelas 8)',
+    slug: 'jejak-keemasan-daulah-abbasiyah-baitul-hikmah',
+    deskripsi_singkat: 'Menelusuri sejarah peradaban Islam di Baghdad, berdirinya perpustakaan dan pusat riset Baitul Hikmah, serta kontribusi para ilmuwan muslim terkemuka.',
+    konten: `# Jejak Emas Daulah Abbasiyah di Baghdad
+
+Masa pemerintahan Khalifah Harun Ar-Rasyid dan Al-Ma'mun menandai era keemasan (*The Golden Age of Islam*).
+
+## Prestasi Peradaban:
+1. **Baitul Hikmah**: Pusat penerjemahan karya-karya filsafat dan sains dunia ke dalam bahasa Arab.
+2. **Ilmuwan Besar**:
+   - **Al-Khawarizmi**: Penemu Aljabar dan angka nol.
+   - **Ibnu Sina (Avicenna)**: Bapak kedokteran modern (*Al-Qanun fi at-Tibb*).
+   - **Al-Kindi**: Filsuf muslim pertama.
+3. **Inspirasi untuk Peserta Didik**: Menumbuhkan rasa percaya diri bahwa umat Islam memiliki warisan keilmuan dan literasi sains yang luar biasa.`,
+    gambar_cover_url: 'https://images.unsplash.com/photo-1541872703-74c5e44368f9?auto=format&fit=crop&w=1200&q=80',
+    kategori_id: 'c-k8-ski',
+    status: 'published',
+    view_count: 530,
+    created_at: '2024-01-25T08:00:00.000Z',
+    updated_at: '2024-01-25T08:00:00.000Z',
+    kategori: {
+      id: 'c-k8-ski',
+      nama: 'Sejarah Kebudayaan Islam (SKI)',
+      parent_id: 'c-k8',
+      urutan: 5,
+    },
+    files: [
+      {
+        id: 'f-6',
+        materi_id: 'm-5',
+        nama_file: 'Slide_Presentasi_Daulah_Abbasiyah_Kelas8.pptx',
+        file_url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
+        tipe: 'ppt',
+        ukuran_bytes: 4500000,
+      },
+    ],
+  },
+  {
+    id: 'm-6',
+    judul: 'Menjunjung Tinggi Toleransi dan Menghargai Perbedaan: Tafsir Q.S. Al-Hujurat Ayat 13 (Kelas 9)',
+    slug: 'menjunjung-tinggi-toleransi-qs-al-hujurat-13',
+    deskripsi_singkat: 'Kajian tentang keragaman suku bangsa sebagai sunnatullah untuk saling mengenal (lita\'arafu) dan ukuran kemuliaan di sisi Allah hanyalah ketakwaan.',
+    konten: `# Menjunjung Tinggi Toleransi (Q.S. Al-Hujurat: 13)
+
+Allah SWT berfirman:
+
+> *"Wahai manusia! Sungguh, Kami telah menciptakan kamu dari seorang laki-laki dan seorang perempuan, kemudian Kami jadikan kamu berbangsa-bangsa dan bersuku-suku agar kamu saling mengenal. Sungguh, yang paling mulia di antara kamu di sisi Allah ialah orang yang paling bertakwa. Sungguh, Allah Maha Mengetahui, Maha Teliti."* (Q.S. Al-Hujurat [49]: 13)
+
+## Nilai-Nilai Moderasi Beragama:
+- **Tasamuh (Toleransi)**: Menghormati perbedaan suku, agama, dan latar belakang budaya.
+- **Tawazun (Keseimbangan)**: Seimbang dalam beragama dan berbangsa.
+- **I'tidal (Keadilan)**: Bersikap adil kepada siapa pun tanpa diskriminasi.`,
+    gambar_cover_url: 'https://images.unsplash.com/photo-1511632765486-a01980e01a18?auto=format&fit=crop&w=1200&q=80',
+    kategori_id: 'c-k9-qurhad',
+    status: 'published',
+    view_count: 620,
+    created_at: '2024-01-10T08:00:00.000Z',
+    updated_at: '2024-01-10T08:00:00.000Z',
+    kategori: {
+      id: 'c-k9-qurhad',
+      nama: 'Al-Qur\'an dan Hadis',
+      parent_id: 'c-k9',
+      urutan: 1,
+    },
+    files: [
+      {
+        id: 'f-7',
+        materi_id: 'm-6',
+        nama_file: 'Modul_Ajar_PAI_Toleransi_Kelas9.pdf',
+        file_url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
+        tipe: 'pdf',
+        ukuran_bytes: 3100000,
       },
     ],
   },
