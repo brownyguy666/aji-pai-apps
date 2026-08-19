@@ -5,6 +5,9 @@ import { initialKomentar } from '../lib/seedData';
 
 const LOCAL_STORAGE_KEY = 'aji_pai_komentar';
 
+const isUUID = (str: string) =>
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
+
 export interface KentarCommentWithMateri extends Komentar {
   materi?: {
     id: string;
@@ -43,14 +46,14 @@ export const useKomentar = (options?: { materiId?: string; status?: string }) =>
       }
 
       let query = supabase
-        .from('komentar_materi')
+        .from('komentar')
         .select(`
           *,
           materi:materi_pai(id, judul, slug)
         `)
         .order('created_at', { ascending: false });
 
-      if (options?.materiId) {
+      if (options?.materiId && isUUID(options.materiId)) {
         query = query.eq('materi_id', options.materiId);
       }
 
@@ -60,7 +63,16 @@ export const useKomentar = (options?: { materiId?: string; status?: string }) =>
 
       const { data, error } = await query;
       if (error) {
-        console.warn('Error fetching komentar from Supabase, fallback to local/seed:', error);
+        // Fallback to table komentar_materi if existing
+        const fallback = await supabase
+          .from('komentar_materi')
+          .select(`*, materi:materi_pai(id, judul, slug)`)
+          .order('created_at', { ascending: false });
+
+        if (!fallback.error && fallback.data) {
+          return fallback.data as KentarCommentWithMateri[];
+        }
+
         const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
         return saved ? JSON.parse(saved) : initialKomentar;
       }
@@ -93,16 +105,21 @@ export const useKomentar = (options?: { materiId?: string; status?: string }) =>
         return item;
       }
 
+      // Ensure valid UUID or fallback
+      const payload: any = {
+        nama: newComment.nama,
+        email: newComment.email,
+        konten: newComment.konten,
+        status: 'pending',
+      };
+
+      if (isUUID(newComment.materi_id)) {
+        payload.materi_id = newComment.materi_id;
+      }
+
       const { data, error } = await supabase
-        .from('komentar_materi')
-        .insert({
-          materi_id: newComment.materi_id,
-          nama: newComment.nama,
-          email: newComment.email,
-          konten: newComment.konten,
-          status: 'pending',
-          parent_id: newComment.parent_id || null,
-        })
+        .from('komentar')
+        .insert(payload)
         .select()
         .single();
 
@@ -124,8 +141,12 @@ export const useKomentar = (options?: { materiId?: string; status?: string }) =>
         return current.find((c) => c.id === id);
       }
 
+      if (!isUUID(id)) {
+        return komentarList.find((c) => c.id === id);
+      }
+
       const { data, error } = await supabase
-        .from('komentar_materi')
+        .from('komentar')
         .update({ status: newStatus })
         .eq('id', id)
         .select()
@@ -147,12 +168,10 @@ export const useKomentar = (options?: { materiId?: string; status?: string }) =>
         return id;
       }
 
-      const { error } = await supabase
-        .from('komentar_materi')
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
+      if (isUUID(id)) {
+        const { error } = await supabase.from('komentar').delete().eq('id', id);
+        if (error) throw error;
+      }
       return id;
     },
     onSuccess: () => {

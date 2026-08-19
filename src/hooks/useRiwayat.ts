@@ -5,6 +5,9 @@ import { initialRiwayat } from '../lib/seedData';
 
 const LOCAL_STORAGE_KEY = 'aji_pai_riwayat';
 
+const isUUID = (str: string) =>
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
+
 export const useRiwayat = (options?: {
   jenis?: 'pendidikan' | 'organisasi' | 'pengalaman' | 'sertifikasi' | 'all';
 }) => {
@@ -50,7 +53,7 @@ export const useRiwayat = (options?: {
         return saved ? JSON.parse(saved) : initialRiwayat;
       }
 
-      // If database table is empty, provide initialRiwayat as default fallback
+      // If database table is empty, return initialRiwayat as default items
       if (!data || data.length === 0) {
         let list = initialRiwayat;
         if (options?.jenis && options.jenis !== 'all') {
@@ -121,6 +124,34 @@ export const useRiwayat = (options?: {
         return current.find((c) => c.id === id);
       }
 
+      // If item is a seed item (not a valid UUID in Supabase yet), insert it as a new persistent row
+      if (!isUUID(id)) {
+        const existing = riwayatList.find((r) => r.id === id);
+        const toInsert = {
+          judul: updates.judul || existing?.judul || '',
+          instansi_organisasi: updates.instansi_organisasi || existing?.instansi_organisasi || '',
+          jenis: updates.jenis || existing?.jenis || 'pendidikan',
+          tahun_mulai: updates.tahun_mulai || existing?.tahun_mulai || 2024,
+          tahun_selesai: updates.tahun_selesai !== undefined ? updates.tahun_selesai : existing?.tahun_selesai,
+          deskripsi: updates.deskripsi !== undefined ? updates.deskripsi : existing?.deskripsi,
+          link_verifikasi: updates.link_verifikasi !== undefined ? updates.link_verifikasi : existing?.link_verifikasi,
+          badge_url: updates.badge_url !== undefined ? updates.badge_url : existing?.badge_url,
+          certificate_url: updates.certificate_url !== undefined ? updates.certificate_url : existing?.certificate_url,
+          accredible_id: updates.accredible_id !== undefined ? updates.accredible_id : existing?.accredible_id,
+          urutan: updates.urutan !== undefined ? updates.urutan : existing?.urutan || 0,
+          is_featured: updates.is_featured !== undefined ? updates.is_featured : true,
+        };
+
+        const { data, error } = await supabase
+          .from('riwayat')
+          .insert(toInsert)
+          .select()
+          .single();
+
+        if (error) throw error;
+        return data as Riwayat;
+      }
+
       const { data, error } = await supabase
         .from('riwayat')
         .update(updates)
@@ -144,8 +175,10 @@ export const useRiwayat = (options?: {
         return id;
       }
 
-      const { error } = await supabase.from('riwayat').delete().eq('id', id);
-      if (error) throw error;
+      if (isUUID(id)) {
+        const { error } = await supabase.from('riwayat').delete().eq('id', id);
+        if (error) throw error;
+      }
       return id;
     },
     onSuccess: () => {

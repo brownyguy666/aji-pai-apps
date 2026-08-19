@@ -5,6 +5,9 @@ import { initialTestimoni } from '../lib/seedData';
 
 const LOCAL_STORAGE_KEY = 'aji_pai_testimoni';
 
+const isUUID = (str: string) =>
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
+
 export const useTestimoni = (options?: { status?: 'approved' | 'pending' | 'rejected' | 'all' }) => {
   const queryClient = useQueryClient();
 
@@ -46,6 +49,14 @@ export const useTestimoni = (options?: { status?: 'approved' | 'pending' | 'reje
         console.warn('Error fetching testimoni from Supabase, fallback to local/seed:', error);
         const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
         return saved ? JSON.parse(saved) : initialTestimoni;
+      }
+
+      if (!data || data.length === 0) {
+        let list = initialTestimoni;
+        if (options?.status && options.status !== 'all') {
+          list = list.filter((t) => t.status === options.status);
+        }
+        return list;
       }
 
       return data as Testimoni[];
@@ -95,6 +106,29 @@ export const useTestimoni = (options?: { status?: 'approved' | 'pending' | 'reje
         return current.find((c) => c.id === id);
       }
 
+      // If seed item being updated, insert to Supabase
+      if (!isUUID(id)) {
+        const existing = testimoniList.find((t) => t.id === id);
+        const toInsert = {
+          nama: updates.nama || existing?.nama || '',
+          peran_instansi: updates.peran_instansi || existing?.peran_instansi || '',
+          konten: updates.konten || existing?.konten || '',
+          foto_url: updates.foto_url !== undefined ? updates.foto_url : existing?.foto_url || null,
+          status: updates.status || existing?.status || 'approved',
+          rating: updates.rating !== undefined ? updates.rating : existing?.rating || 5,
+          urutan: updates.urutan !== undefined ? updates.urutan : existing?.urutan || 0,
+        };
+
+        const { data, error } = await supabase
+          .from('testimoni')
+          .insert(toInsert)
+          .select()
+          .single();
+
+        if (error) throw error;
+        return data as Testimoni;
+      }
+
       const { data, error } = await supabase
         .from('testimoni')
         .update(updates)
@@ -118,8 +152,10 @@ export const useTestimoni = (options?: { status?: 'approved' | 'pending' | 'reje
         return id;
       }
 
-      const { error } = await supabase.from('testimoni').delete().eq('id', id);
-      if (error) throw error;
+      if (isUUID(id)) {
+        const { error } = await supabase.from('testimoni').delete().eq('id', id);
+        if (error) throw error;
+      }
       return id;
     },
     onSuccess: () => {

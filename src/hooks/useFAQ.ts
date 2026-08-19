@@ -5,6 +5,9 @@ import { initialFAQ } from '../lib/seedData';
 
 const LOCAL_STORAGE_KEY = 'aji_pai_faq';
 
+const isUUID = (str: string) =>
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
+
 export const useFAQ = () => {
   const queryClient = useQueryClient();
 
@@ -33,6 +36,10 @@ export const useFAQ = () => {
         console.warn('Error fetching faq from Supabase, fallback to local/seed:', error);
         const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
         return saved ? JSON.parse(saved) : initialFAQ;
+      }
+
+      if (!data || data.length === 0) {
+        return initialFAQ;
       }
 
       return data as FAQ[];
@@ -76,6 +83,27 @@ export const useFAQ = () => {
         return current.find((c) => c.id === id);
       }
 
+      // If seed item being updated, insert to Supabase
+      if (!isUUID(id)) {
+        const existing = faqList.find((f) => f.id === id);
+        const toInsert = {
+          pertanyaan: updates.pertanyaan || existing?.pertanyaan || '',
+          jawaban: updates.jawaban || existing?.jawaban || '',
+          kategori: updates.kategori || existing?.kategori || 'Umum',
+          urutan: updates.urutan !== undefined ? updates.urutan : existing?.urutan || 0,
+          is_active: updates.is_active !== undefined ? updates.is_active : existing?.is_active ?? true,
+        };
+
+        const { data, error } = await supabase
+          .from('faq')
+          .insert(toInsert)
+          .select()
+          .single();
+
+        if (error) throw error;
+        return data as FAQ;
+      }
+
       const { data, error } = await supabase
         .from('faq')
         .update(updates)
@@ -99,8 +127,10 @@ export const useFAQ = () => {
         return id;
       }
 
-      const { error } = await supabase.from('faq').delete().eq('id', id);
-      if (error) throw error;
+      if (isUUID(id)) {
+        const { error } = await supabase.from('faq').delete().eq('id', id);
+        if (error) throw error;
+      }
       return id;
     },
     onSuccess: () => {

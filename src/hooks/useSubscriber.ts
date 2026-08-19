@@ -5,6 +5,9 @@ import { initialSubscribers } from '../lib/seedData';
 
 const LOCAL_STORAGE_KEY = 'aji_pai_subscribers';
 
+const isUUID = (str: string) =>
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
+
 export type SubscribeInput = string | { email: string; honeypot?: string };
 
 export const useSubscriber = () => {
@@ -27,11 +30,21 @@ export const useSubscriber = () => {
       }
 
       const { data, error } = await supabase
-        .from('subscribers_newsletter')
+        .from('subscriber')
         .select('*')
         .order('created_at', { ascending: false });
 
       if (error) {
+        // Fallback to table subscribers_newsletter if existing
+        const fallback = await supabase
+          .from('subscribers_newsletter')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (!fallback.error && fallback.data) {
+          return fallback.data as Subscriber[];
+        }
+
         console.warn('Error fetching subscribers from Supabase, fallback to local/seed:', error);
         const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
         return saved ? JSON.parse(saved) : initialSubscribers;
@@ -70,20 +83,28 @@ export const useSubscriber = () => {
         return item;
       }
 
-      const { data, error } = await supabase
-        .from('subscribers_newsletter')
+      let res = await supabase
+        .from('subscriber')
         .insert({ email })
         .select()
         .single();
 
-      if (error) {
+      if (res.error) {
         // If unique constraint violation, ignore as already subscribed
-        if (error.code === '23505') {
+        if (res.error.code === '23505') {
           return { id: 'existing', email, created_at: new Date().toISOString() };
         }
-        throw error;
+        // Fallback to subscribers_newsletter if table differs
+        const fb = await supabase.from('subscribers_newsletter').insert({ email }).select().single();
+        if (fb.error) {
+          if (fb.error.code === '23505') {
+            return { id: 'existing', email, created_at: new Date().toISOString() };
+          }
+          throw fb.error;
+        }
+        return fb.data as Subscriber;
       }
-      return data as Subscriber;
+      return res.data as Subscriber;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['subscribers'] });
@@ -98,12 +119,10 @@ export const useSubscriber = () => {
         return id;
       }
 
-      const { error } = await supabase
-        .from('subscribers_newsletter')
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
+      if (isUUID(id)) {
+        await supabase.from('subscriber').delete().eq('id', id);
+        await supabase.from('subscribers_newsletter').delete().eq('id', id);
+      }
       return id;
     },
     onSuccess: () => {
