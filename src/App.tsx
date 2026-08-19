@@ -5,6 +5,7 @@ import { HelmetProvider } from 'react-helmet-async';
 import { AuthProvider } from './context/AuthContext';
 import { ToastProvider } from './components/ui/Toast';
 
+// Build Version 0.1.0 - EPUB Streaming Reader & Smart Metadata Extractor
 // Public Layout & Pages
 import { Layout } from './components/layout/Layout';
 import { HomePage } from './pages/HomePage';
