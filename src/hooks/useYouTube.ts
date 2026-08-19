@@ -135,5 +135,6 @@ export function useYouTube() {
     createVideo: createMutation.mutateAsync,
     updateVideo: updateMutation.mutateAsync,
     deleteVideo: deleteMutation.mutateAsync,
+    refetch: query.refetch,
   };
 }
