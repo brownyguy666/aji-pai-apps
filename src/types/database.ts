@@ -1,4 +1,4 @@
-export type SectionKey = 'hero' | 'materi' | 'youtube' | 'terjemahan' | 'karya' | 'kontak';
+export type SectionKey = 'hero' | 'materi' | 'sertifikasi' | 'youtube' | 'terjemahan' | 'karya' | 'kontak';
 
 export interface Profile {
   id: string;
@@ -98,6 +98,20 @@ export interface YouTubeVideo {
   video_id: string;
   thumbnail_url: string | null;
   published_at: string | null;
+  urutan: number;
+  is_featured: boolean;
+  created_at?: string;
+}
+
+export interface Sertifikasi {
+  id: string;
+  judul: string;
+  penerbit: string;
+  nomor_sertifikat: string | null;
+  link_verifikasi: string | null;
+  badge_url: string | null;
+  tahun: number;
+  kategori: string; // e.g. "Google for Education", "Kementerian Agama", "Pendidik Profesional"
   urutan: number;
   is_featured: boolean;
   created_at?: string;

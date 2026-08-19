@@ -1,6 +1,7 @@
 import React from 'react';
 import { useSections } from '../../hooks/useSections';
 import { HeroSection } from './HeroSection';
+import { SertifikasiSection } from './SertifikasiSection';
 import { MateriSection } from './MateriSection';
 import { YouTubeSection } from './YouTubeSection';
 import { TerjemahanSection } from './TerjemahanSection';
@@ -22,6 +23,8 @@ export const DynamicSectionRenderer: React.FC = () => {
     switch (key) {
       case 'hero':
         return <HeroSection key="hero" />;
+      case 'sertifikasi':
+        return <SertifikasiSection key="sertifikasi" />;
       case 'materi':
         return <MateriSection key="materi" />;
       case 'youtube':

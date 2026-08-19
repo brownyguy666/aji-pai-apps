@@ -100,6 +100,21 @@ CREATE TABLE IF NOT EXISTS public.youtube_videos (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- 9. TABEL: sertifikasi (Google Certified Educator, Kemenag, Kemdikbud)
+CREATE TABLE IF NOT EXISTS public.sertifikasi (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    judul TEXT NOT NULL,
+    penerbit TEXT NOT NULL,
+    nomor_sertifikat TEXT,
+    link_verifikasi TEXT,
+    badge_url TEXT,
+    tahun INT NOT NULL DEFAULT EXTRACT(YEAR FROM CURRENT_DATE),
+    kategori TEXT DEFAULT 'Google for Education',
+    urutan INT NOT NULL DEFAULT 0,
+    is_featured BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- ==============================================================================
 -- ROW LEVEL SECURITY (RLS) POLICIES
 -- ==============================================================================
@@ -112,6 +127,7 @@ ALTER TABLE public.materi_file ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.proyek_terjemahan ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.karya ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.youtube_videos ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.sertifikasi ENABLE ROW LEVEL SECURITY;
 
 -- Drop existing policies if any to prevent duplicate policy errors
 DROP POLICY IF EXISTS "Publik dapat membaca profile" ON public.profile;
@@ -130,6 +146,8 @@ DROP POLICY IF EXISTS "Publik dapat membaca karya" ON public.karya;
 DROP POLICY IF EXISTS "Admin dapat mengelola karya" ON public.karya;
 DROP POLICY IF EXISTS "Publik dapat membaca youtube_videos" ON public.youtube_videos;
 DROP POLICY IF EXISTS "Admin dapat mengelola youtube_videos" ON public.youtube_videos;
+DROP POLICY IF EXISTS "Publik dapat membaca sertifikasi" ON public.sertifikasi;
+DROP POLICY IF EXISTS "Admin dapat mengelola sertifikasi" ON public.sertifikasi;
 
 CREATE POLICY "Publik dapat membaca profile" ON public.profile FOR SELECT USING (true);
 CREATE POLICY "Admin dapat mengelola profile" ON public.profile FOR ALL TO authenticated USING (true) WITH CHECK (true);
@@ -154,6 +172,9 @@ CREATE POLICY "Admin dapat mengelola karya" ON public.karya FOR ALL TO authentic
 
 CREATE POLICY "Publik dapat membaca youtube_videos" ON public.youtube_videos FOR SELECT USING (true);
 CREATE POLICY "Admin dapat mengelola youtube_videos" ON public.youtube_videos FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
+CREATE POLICY "Publik dapat membaca sertifikasi" ON public.sertifikasi FOR SELECT USING (true);
+CREATE POLICY "Admin dapat mengelola sertifikasi" ON public.sertifikasi FOR ALL TO authenticated USING (true) WITH CHECK (true);
 
 -- ==============================================================================
 -- STORAGE BUCKETS
@@ -182,22 +203,30 @@ INSERT INTO public.profile (id, nama, tagline, bio, foto_url, email, youtube_cha
 VALUES (
     'a0000000-0000-0000-0000-000000000001',
     'Aji Bagus Khoiri',
-    'Pendidik Agama Islam, Penerjemah Kitab Turats & Kreator Konten Edukasi',
+    'Pendidik Agama Islam, Google Certified Educator & Penerjemah Kitab Turats',
     'Mengabdi dalam dunia pendidikan Islam dengan memadukan khazanah keilmuan klasik (turats) dan pendekatan pedagogis modern abad 21.',
     'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80',
     'ajibaguskhoiri@gmail.com',
-    'UC_example_youtube_id',
-    '{"youtube": "https://youtube.com/@edukasipai", "instagram": "https://instagram.com", "facebook": "https://facebook.com", "whatsapp": "https://wa.me/6281234567890", "telegram": "https://t.me"}'::jsonb
+    'UCntpnPCycMUUtU34ztu_PtQ',
+    '{"youtube": "https://www.youtube.com/@ZonaBelajarID", "instagram": "https://instagram.com", "facebook": "https://facebook.com", "whatsapp": "https://wa.me/6281234567890", "telegram": "https://t.me"}'::jsonb
 ) ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO public.sections (key, label, urutan, is_active) VALUES
     ('hero', 'Profil & Pengantar Utama', 1, true),
-    ('materi', 'Materi & Modul PAI Terbaru', 2, true),
-    ('youtube', 'Channel & Video YouTube Edukasi', 3, true),
-    ('terjemahan', 'Proyek Terjemahan Kitab & Buku', 4, true),
-    ('karya', 'Galeri Karya & Publikasi Digital', 5, true),
-    ('kontak', 'Kontak & Kolaborasi', 6, true)
+    ('sertifikasi', 'Sertifikasi & Kredensial Resmi', 2, true),
+    ('materi', 'Materi & Modul PAI Terbaru', 3, true),
+    ('youtube', 'Channel & Video YouTube Edukasi', 4, true),
+    ('terjemahan', 'Proyek Terjemahan Kitab & Buku', 5, true),
+    ('karya', 'Galeri Karya & Publikasi Digital', 6, true),
+    ('kontak', 'Kontak & Kolaborasi', 7, true)
 ON CONFLICT (key) DO NOTHING;
+
+INSERT INTO public.sertifikasi (judul, penerbit, nomor_sertifikat, link_verifikasi, tahun, kategori, urutan, is_featured) VALUES
+    ('Google Certified Educator Level 1', 'Google for Education', 'GCE-L1-2024', 'https://educertifications.google/', 2024, 'Google for Education', 1, true),
+    ('Google Certified Educator Level 2', 'Google for Education', 'GCE-L2-2024', 'https://educertifications.google/', 2024, 'Google for Education', 2, true),
+    ('Sertifikat Pendidik Profesional (Gr.) Bidang PAI', 'Kementerian Agama & Kemendikbudristek RI', 'KEMENAG-PAI-SERTIFIKASI', 'https://simpatika.kemenag.go.id', 2023, 'Pendidikan Profesi Guru', 3, true),
+    ('Google Certified Trainer', 'Google for Education', 'GCT-TRAINER-ID', 'https://educertifications.google/', 2025, 'Google for Education', 4, true)
+ON CONFLICT DO NOTHING;
 
 INSERT INTO public.kategori_materi (id, nama, parent_id, urutan) VALUES
     ('c1000000-0000-0000-0000-000000000001', 'Kelas X (Fase E)', NULL, 1),

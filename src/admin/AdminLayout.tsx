@@ -14,6 +14,7 @@ import {
   Menu,
   X,
   Sparkles,
+  ShieldCheck,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useProfile } from '../hooks/useProfile';
@@ -47,6 +48,7 @@ export const AdminLayout: React.FC = () => {
   const navItems = [
     { label: 'Dashboard', href: '/admin', icon: LayoutDashboard, exact: true },
     { label: 'Urutan Landing Page', href: '/admin/sections', icon: MoveVertical },
+    { label: 'Sertifikasi & Kredensial', href: '/admin/sertifikasi', icon: ShieldCheck },
     { label: 'Materi PAI & Modul', href: '/admin/materi', icon: BookOpen },
     { label: 'Kategori Bertingkat', href: '/admin/kategori', icon: FolderTree },
     { label: 'Proyek Terjemahan', href: '/admin/terjemahan', icon: Languages },

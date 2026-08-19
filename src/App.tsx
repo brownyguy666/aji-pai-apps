@@ -25,6 +25,7 @@ import { KategoriManager } from './admin/KategoriManager';
 import { TerjemahanManager } from './admin/TerjemahanManager';
 import { KaryaManager } from './admin/KaryaManager';
 import { YouTubeManager } from './admin/YouTubeManager';
+import { SertifikasiManager } from './admin/SertifikasiManager';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -59,6 +60,7 @@ export function App() {
               <Route path="/admin" element={<AdminLayout />}>
                 <Route index element={<AdminDashboardPage />} />
                 <Route path="sections" element={<SectionManager />} />
+                <Route path="sertifikasi" element={<SertifikasiManager />} />
                 <Route path="profile" element={<ProfileEditor />} />
                 <Route path="materi" element={<MateriManager />} />
                 <Route path="materi/new" element={<MateriFormPage />} />

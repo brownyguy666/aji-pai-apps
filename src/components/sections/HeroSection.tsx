@@ -145,9 +145,13 @@ export const HeroSection: React.FC = () => {
                     {profile.nama}
                   </h3>
                   <div className="flex flex-wrap justify-center gap-1.5">
+                    <a href="#sertifikasi">
+                      <Badge variant="blue" size="sm" className="hover:opacity-80 transition-opacity">
+                        Google Certified Educator
+                      </Badge>
+                    </a>
                     <Badge variant="brand" size="sm">Fikih & Ushul Fikih</Badge>
-                    <Badge variant="amber" size="sm">Bahasa Arab & Turats</Badge>
-                    <Badge variant="blue" size="sm">Kurikulum Merdeka</Badge>
+                    <Badge variant="amber" size="sm">Turats & Modul Digital</Badge>
                   </div>
                 </div>
 

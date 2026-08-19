@@ -1,10 +1,10 @@
-import { Profile, SectionItem, KategoriMateri, MateriPAI, ProyekTerjemahan, Karya, YouTubeVideo } from '../types/database';
+import { Profile, SectionItem, KategoriMateri, MateriPAI, ProyekTerjemahan, Karya, YouTubeVideo, Sertifikasi } from '../types/database';
 
 export const initialProfile: Profile = {
   id: 'a0000000-0000-0000-0000-000000000001',
   nama: 'Aji Bagus Khoiri',
-  tagline: 'Pendidik Agama Islam, Penerjemah Kitab Turats & Kreator Konten Edukasi',
-  bio: 'Mengabdi dalam dunia pendidikan Islam dengan memadukan khazanah keilmuan klasik (turats) dan pendekatan pedagogis modern abad 21. Berpengalaman sebagai guru PAI, penerjemah kitab berbahasa Arab, dan perancang materi ajar digital interaktif.',
+  tagline: 'Pendidik Agama Islam, Google Certified Educator & Penerjemah Kitab Turats',
+  bio: 'Mengabdi dalam dunia pendidikan Islam dengan memadukan khazanah keilmuan klasik (turats) dan pendekatan pedagogis modern abad 21 berbasis Google for Education. Berpengalaman sebagai guru PAI, penerjemah kitab berbahasa Arab, dan perancang materi ajar digital interaktif.',
   foto_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80',
   email: 'ajibaguskhoiri@gmail.com',
   youtube_channel_id: 'UCntpnPCycMUUtU34ztu_PtQ',
@@ -22,11 +22,12 @@ export const initialProfile: Profile = {
 
 export const initialSections: SectionItem[] = [
   { id: 's-1', key: 'hero', label: 'Profil & Pengantar Utama', urutan: 1, is_active: true },
-  { id: 's-2', key: 'materi', label: 'Materi & Modul PAI Terbaru', urutan: 2, is_active: true },
-  { id: 's-3', key: 'youtube', label: 'Channel & Video YouTube Edukasi', urutan: 3, is_active: true },
-  { id: 's-4', key: 'terjemahan', label: 'Proyek Terjemahan Kitab & Buku', urutan: 4, is_active: true },
-  { id: 's-5', key: 'karya', label: 'Galeri Karya & Publikasi Digital', urutan: 5, is_active: true },
-  { id: 's-6', key: 'kontak', label: 'Kontak & Kolaborasi', urutan: 6, is_active: true },
+  { id: 's-2', key: 'sertifikasi', label: 'Sertifikasi & Kredensial Resmi', urutan: 2, is_active: true },
+  { id: 's-3', key: 'materi', label: 'Materi & Modul PAI Terbaru', urutan: 3, is_active: true },
+  { id: 's-4', key: 'youtube', label: 'Channel & Video YouTube Edukasi', urutan: 4, is_active: true },
+  { id: 's-5', key: 'terjemahan', label: 'Proyek Terjemahan Kitab & Buku', urutan: 5, is_active: true },
+  { id: 's-6', key: 'karya', label: 'Galeri Karya & Publikasi Digital', urutan: 6, is_active: true },
+  { id: 's-7', key: 'kontak', label: 'Kontak & Kolaborasi', urutan: 7, is_active: true },
 ];
 
 export const initialCategories: KategoriMateri[] = [
@@ -58,28 +59,26 @@ Dalam era globalisasi yang sarat akan tantangan moral dan kompetisi global, nila
 > *"Dan Kami telah menurunkan Kitab (Al-Qur'an) kepadamu (Muhammad) dengan membawa kebenaran, yang membenarkan kitab-kitab yang diturunkan sebelumnya dan menjaganya... Maka berlomba-lombalah kamu dalam kebaikan."* (Q.S. Al-Ma'idah [5]: 48)
 
 ## 1. Makna Etimologis dan Terminologis
-Secara bahasa, **Fastabiqul Khairat** (*فَاسْتَبِقُوا الْخَيْرَاتِ*) berakar dari kata *sabaqa* yang berarti mendahului atau berlomba, dan *al-khairat* yang merupakan bentuk jamak dari *khair* (kebaikan).
+Secara bahasa, **Fastabiqul Khairat** berakar dari kata *sabaqa* yang berarti mendahului atau berlomba, dan *al-khairat* yang merupakan bentuk jamak dari *khair* (kebaikan).
 
-Konsep ini menuntut tindakan proaktif, bukan pasif. Seorang pelajar dan pendidik muslim tidak sekadar menghindari keburukan, melainkan secara aktif menciptakan kebaikan yang berdampak luas bagi umat manusia (*rahmatan lil 'alamin*).
+## 2. Implementasi dalam Pembelajaran
+1. Membiasakan disiplin waktu dalam menuntut ilmu.
+2. Saling membantu dalam memahami materi pelajaran tanpa pamrih.
+3. Menjaga adab terhadap guru dan sesama penuntut ilmu.
 
-## 2. Kandungan Pokok Ayat
-1. **Keabsahan dan Keaslian Al-Qur'an**: Al-Qur'an menjadi batu uji (*muhaimin*) dan penyempurna kitab-kitab samawi sebelumnya.
-2. **Ketetapan Syariat yang Proporsional**: Allah SWT menetapkan syariat dan jalan terang (*syir'atan wa minhajan*) yang sesuai bagi setiap zaman.
-3. **Ujian atas Keragaman Manusia**: Perbedaan latar belakang manusia dijadikan arena untuk menguji siapa yang terbaik amal perbuatannya.
-
-## 3. Implementasi Pedagogis dalam Kehidupan Siswa
-- **Dalam Akademik**: Menuntut ilmu bukan untuk menyombongkan diri, melainkan untuk memperluas manfaat dan memecahkan permasalahan masyarakat.
-- **Dalam Sosial**: Bersikap empati, saling tolong-menolong (*ta'awun*), dan menjadi pelopor solusi kebajikan di lingkungan sekitar.
-- **Dalam Era Digital**: Memproduksi konten edukatif, menyebarkan narasi damai, dan memerangi disinformasi serta ujaran kebencian.
-
----
-Silakan unduh file lampiran modul ajar dan LKPD di bawah untuk pendalaman materi.`,
+Silakan unduh modul ajar dan lembar kerja peserta didik (LKPD) pada lampiran di bawah.`,
     gambar_cover_url: 'https://images.unsplash.com/photo-1584551246679-0daf3d275d0f?auto=format&fit=crop&w=1200&q=80',
     kategori_id: 'c3-1',
     status: 'published',
     view_count: 428,
-    created_at: '2024-05-10T10:00:00Z',
-    updated_at: '2024-05-10T10:00:00Z',
+    created_at: '2024-05-10T08:00:00.000Z',
+    updated_at: '2024-05-10T08:00:00.000Z',
+    kategori: {
+      id: 'c3-1',
+      nama: 'Tafsir Q.S. Al-Ma\'idah: 48',
+      parent_id: 'c2-1',
+      urutan: 1,
+    },
     files: [
       {
         id: 'f-1',
@@ -92,101 +91,100 @@ Silakan unduh file lampiran modul ajar dan LKPD di bawah untuk pendalaman materi
       {
         id: 'f-2',
         materi_id: 'm-1',
-        nama_file: 'Lembar_Kerja_Peserta_Didik_LKPD_AlMaidah48.docx',
+        nama_file: 'Slide_Presentasi_Tafsir_Al_Maidah_48.pptx',
         file_url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
-        tipe: 'word',
-        ukuran_bytes: 890000,
+        tipe: 'ppt',
+        ukuran_bytes: 5820000,
       },
     ],
   },
   {
     id: 'm-2',
-    judul: 'Pohon Keimanan: Analisis Komprehensif 77 Cabang Iman (Syu\'abul Iman)',
-    slug: 'analisis-komprehensif-77-cabang-iman-syuabul-iman',
-    deskripsi_singkat: 'Penjelasan terstruktur mengenai pilar-pilar cabang keimanan yang mencakup ranah hati, lisan, dan perbuatan praktis.',
-    konten: `# Pohon Keimanan: 77 Cabang Iman (Syu'abul Iman)
+    judul: 'Menelaah 77 Cabang Iman (Syu\'abul Iman) Berdasarkan Hadits Shahih',
+    slug: 'menelaah-77-cabang-iman-syuabul-iman-hadits-shahih',
+    deskripsi_singkat: 'Penjelasan komprehensif mengenai dimensi keimanan: pembenaran hati, lisan, dan amal perbuatan dalam kehidupan muslim.',
+    konten: `# Menelaah 77 Cabang Iman (Syu'abul Iman)
 
-Rasulullah ﷺ bersabda:
-> *"Iman itu mempunyai 70 lebih (atau 60 lebih) cabang. Yang paling utama adalah ucapan Laa ilaaha illallaah, dan yang paling rendah adalah menyingkirkan duri dari jalan, dan rasa malu adalah salah satu cabang dari iman."* (HR. Bukhari dan Muslim)
+Rasulullah SAW bersabda:
+> *"Iman itu memiliki tujuh puluh lebih cabang. Yang paling utama adalah ucapan Laa Ilaaha Illallaah, dan yang paling rendah adalah menyingkirkan duri dari jalan. Dan malu adalah sebagian dari iman."* (HR. Muslim)
 
-## Klasifikasi 3 Dimensi Syu'abul Iman
-
-### A. Cabang Iman yang Berkaitan dengan Niat, Akidah, dan Hati (30 Cabang)
-Mencakup keimanan kepada rukun iman yang enam, keikhlasan, rasa takut (*khauf*), pengharapan (*raja'*), tawakal, dan ridha terhadap takdir Allah SWT.
-
-### B. Cabang Iman yang Berkaitan dengan Lisan (7 Cabang)
-1. Mengucapkan kalimat tauhid *Laa ilaaha illallaah*.
-2. Membaca dan mentadaburi Al-Qur'an.
-3. Menuntut dan mengajarkan ilmu agama.
-4. Berdoa dan berdzikir.
-5. Menjaga lisan dari perkataan sia-sia, dusta, dan ghibah.
-
-### C. Cabang Iman yang Berkaitan dengan Anggota Badan (40 Cabang)
-Meliputi ibadah badaniyah (shalat, zakat, puasa, haji), akhlak mulia dalam keluarga dan masyarakat, menegakkan keadilan, serta menjaga kebersihan dan keselamatan umum.`,
+## Pilar Utama Iman:
+- **Ma'rifatun bil Qalb**: Mengenal Allah dan rukun iman dengan keyakinan kokoh.
+- **Iqrarun bil Lisan**: Mengucapkan syahadat, dzikir, dan kalam yang bermanfaat.
+- **'Amalun bil Arkan**: Mengamalkan syariat dalam perilaku nyata.`,
     gambar_cover_url: 'https://images.unsplash.com/photo-1542816417-0983c9c9ad53?auto=format&fit=crop&w=1200&q=80',
     kategori_id: 'c3-2',
     status: 'published',
-    view_count: 315,
-    created_at: '2024-04-18T09:30:00Z',
-    updated_at: '2024-04-18T09:30:00Z',
+    view_count: 312,
+    created_at: '2024-04-20T08:00:00.000Z',
+    updated_at: '2024-04-20T08:00:00.000Z',
+    kategori: {
+      id: 'c3-2',
+      nama: 'Syu\'abul Iman',
+      parent_id: 'c2-2',
+      urutan: 2,
+    },
     files: [
       {
         id: 'f-3',
         materi_id: 'm-2',
-        nama_file: 'Slide_Presentasi_77_Cabang_Iman_Interaktif.pptx',
+        nama_file: 'LKPD_Syuabul_Iman_Kelas_X.docx',
         file_url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
-        tipe: 'ppt',
-        ukuran_bytes: 4320000,
+        tipe: 'word',
+        ukuran_bytes: 1240000,
       },
     ],
   },
+];
+
+export const initialSertifikasi: Sertifikasi[] = [
   {
-    id: 'm-3',
-    judul: 'Panduan Praktis Fiqih Mawaris: Kaidah Pembagian Harta Waris dalam Islam',
-    slug: 'panduan-praktis-fiqih-mawaris-harta-waris-islam',
-    deskripsi_singkat: 'Matrikulasi sistematis ilmu faraidh, bagian dzawil furudh, ashabah, dan studi kasus perhitungan waris kontemporer.',
-    konten: `# Panduan Praktis Fiqih Mawaris (Ilmu Faraidh)
-
-Ilmu faraidh merupakan salah satu disiplin ilmu syariat yang sangat ditekankan oleh Rasulullah ﷺ untuk dipelajari karena merupakan ilmu yang pertama kali akan diangkat dan sering kali diabaikan.
-
-## 1. Rukun dan Syarat Waris
-Sebelum harta warisan dibagikan kepada ahli waris, terdapat 4 hak mendasar yang harus diselesaikan terlebih dahulu dari harta peninggalan (*tirkah*):
-1. Biaya pengurusan jenazah (*tajhiz al-janazah*).
-2. Pelunasan utang piutang (*ada' ad-duyun*).
-3. Pelaksanaan wasiat maksimal sepertiga harta (*tanfidz al-washaya*).
-4. Pembagian sisa harta kepada ahli waris yang berhak.
-
-## 2. Tabel Bagian Ashabul Furudh
-- **1/2**: Suami (tanpa anak), Anak perempuan tunggal, Cucu perempuan dari anak laki-laki tunggal, Saudari kandung tunggal.
-- **1/4**: Suami (jika ada anak), Istri (tanpa anak).
-- **1/8**: Istri (jika ada anak).
-- **2/3**: Dua anak perempuan atau lebih, Dua cucu perempuan dari anak laki-laki atau lebih, Dua saudari kandung atau lebih.
-- **1/3**: Ibu (tanpa anak dan saudara), Saudara/i seibu dua orang atau lebih.
-- **1/6**: Ayah (ada anak), Ibu (ada anak/saudara), Kakek shahih, Nenek shahihah, Saudara/i seibu tunggal.`,
-    gambar_cover_url: 'https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=1200&q=80',
-    kategori_id: 'c3-3',
-    status: 'published',
-    view_count: 512,
-    created_at: '2024-03-22T14:15:00Z',
-    updated_at: '2024-03-22T14:15:00Z',
-    files: [
-      {
-        id: 'f-4',
-        materi_id: 'm-3',
-        nama_file: 'Buku_Saku_Ringkasan_Ilmu_Mawaris_Lengkap.pdf',
-        file_url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
-        tipe: 'pdf',
-        ukuran_bytes: 3120000,
-      },
-      {
-        id: 'f-5',
-        materi_id: 'm-3',
-        nama_file: 'Template_Kalkulasi_Harta_Waris_Excel.xlsx',
-        file_url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
-        tipe: 'excel',
-        ukuran_bytes: 650000,
-      },
-    ],
+    id: 'cert-1',
+    judul: 'Google Certified Educator Level 1',
+    penerbit: 'Google for Education',
+    nomor_sertifikat: 'GCE-L1-2024',
+    link_verifikasi: 'https://educertifications.google/',
+    badge_url: 'https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg',
+    tahun: 2024,
+    kategori: 'Google for Education',
+    urutan: 1,
+    is_featured: true,
+  },
+  {
+    id: 'cert-2',
+    judul: 'Google Certified Educator Level 2',
+    penerbit: 'Google for Education',
+    nomor_sertifikat: 'GCE-L2-2024',
+    link_verifikasi: 'https://educertifications.google/',
+    badge_url: 'https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg',
+    tahun: 2024,
+    kategori: 'Google for Education',
+    urutan: 2,
+    is_featured: true,
+  },
+  {
+    id: 'cert-3',
+    judul: 'Sertifikat Pendidik Profesional (Gr.) Bidang PAI',
+    penerbit: 'Kementerian Agama & Kemendikbudristek RI',
+    nomor_sertifikat: 'KEMENAG-PAI-SERTIFIKASI',
+    link_verifikasi: 'https://simpatika.kemenag.go.id',
+    badge_url: 'https://images.unsplash.com/photo-1546410531-bb4caa6b424d?auto=format&fit=crop&w=400&q=80',
+    tahun: 2023,
+    kategori: 'Pendidikan Profesi Guru',
+    urutan: 3,
+    is_featured: true,
+  },
+  {
+    id: 'cert-4',
+    judul: 'Google Certified Trainer',
+    penerbit: 'Google for Education',
+    nomor_sertifikat: 'GCT-TRAINER-ID',
+    link_verifikasi: 'https://educertifications.google/',
+    badge_url: 'https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg',
+    tahun: 2025,
+    kategori: 'Google for Education',
+    urutan: 4,
+    is_featured: true,
   },
 ];
 
@@ -196,40 +194,30 @@ export const initialTerjemahan: ProyekTerjemahan[] = [
     judul: 'Terjemahan & Syarah Matan Al-Ghayah wa At-Taqrib (Matan Abi Syuja\')',
     bahasa_asal: 'Bahasa Arab',
     bahasa_tujuan: 'Bahasa Indonesia',
-    deskripsi: 'Terjemahan lengkap disertai anotasi perbandingan qaul mu\'tamad mazhab Syafi\'i untuk bab Thaharah hingga Bab Jinayat, memudahkan pemula memahami fikih klasik.',
+    deskripsi: 'Terjemahan naskah fikih madzhab Syafi\'i ringkas, dilengkapi ta\'liq (catatan kaki penjelas), dalil-dalil Al-Qur\'an dan As-Sunnah, serta bagan visual pembagian hukum syariat.',
     link_file: 'https://archive.org',
     tahun: 2024,
     urutan: 1,
   },
   {
     id: 't-2',
-    judul: 'Terjemahan Konseptual Kitab Al-Hikam Karya Syaikh Ibnu Atha\'illah As-Sakandari',
+    judul: 'Anotasi Terjemah Bidayatul Hidayah karya Imam Al-Ghazali',
     bahasa_asal: 'Bahasa Arab',
     bahasa_tujuan: 'Bahasa Indonesia',
-    deskripsi: 'Kajian terjemahan kontekstual 264 pasal hikmah tasawuf amali, dilengkapi indeks tematik untuk penanaman nilai spiritual pendidik dan peserta didik.',
+    deskripsi: 'Panduan adab harian penuntut ilmu, tata cara ibadah lahir batin, dan etika pergaulan yang diselaraskan dengan kebutuhan remaja dan pelajar masa kini.',
     link_file: 'https://archive.org',
     tahun: 2023,
     urutan: 2,
   },
   {
     id: 't-3',
-    judul: 'Anotasi & Terjemah Kitab Ta\'lim Al-Muta\'allim Thariq At-Ta\'allum',
+    judul: 'Terjemah Ta\'limul Muta\'allim Thariqat Ta\'allum (Syaikh Az-Zarnuji)',
     bahasa_asal: 'Bahasa Arab',
     bahasa_tujuan: 'Bahasa Indonesia',
-    deskripsi: 'Pedoman adab penuntut ilmu karya Imam Az-Zarnuji yang disesuaikan dengan konteks psikologi pendidikan dan etika belajar siswa modern.',
+    deskripsi: 'Kitab rujukan adab penuntut ilmu dengan ulasan kontekstual mengenai manajemen waktu belajar, niat, pemilihan guru, dan etika bersahabat.',
     link_file: 'https://archive.org',
     tahun: 2022,
     urutan: 3,
-  },
-  {
-    id: 't-4',
-    judul: 'Terjemahan Risalah Al-Jami\'ah fi Ushuliddin wa At-Tasawwuf wa Al-Fiqh',
-    bahasa_asal: 'Bahasa Arab',
-    bahasa_tujuan: 'Bahasa Indonesia',
-    deskripsi: 'Kitab ringkas karya Al-Habib Ahmad bin Zain Al-Habsyi yang merangkum tiga pilar utama Islam (Iman, Islam, Ihsan) dalam satu bingkai.',
-    link_file: 'https://archive.org',
-    tahun: 2021,
-    urutan: 4,
   },
 ];
 
@@ -237,7 +225,7 @@ export const initialKarya: Karya[] = [
   {
     id: 'k-1',
     judul: 'Infografis Alur Pensyariatan Ibadah Shalat & Wudhu Sesuai Sunnah',
-    deskripsi: 'Desain visual beresolusi tinggi yang merangkum rukun, syarat sah, sunnah, dan pembatal thaharah serta shalat dalam format estetik.',
+    deskripsi: 'Desain visual beresolusi tinggi yang merangkum rukun, syarat sah, dan hal-hal yang membatalkan ibadah secara terstruktur.',
     gambar_url: 'https://images.unsplash.com/photo-1564769625905-50e93615e769?auto=format&fit=crop&w=800&q=80',
     link_eksternal: 'https://behance.net',
     kategori: 'Infografis',
@@ -245,17 +233,17 @@ export const initialKarya: Karya[] = [
   },
   {
     id: 'k-2',
-    judul: 'E-Book: Bunga Rampai Pendekatan Pembelajaran PAI Abad 21',
-    deskripsi: 'Buku digital kompilasi model pembelajaran inovatif (Project Based Learning, TPACK, dan Gamifikasi) untuk guru PAI SMA/SMK.',
+    judul: 'E-Book Ringkasan Ushul Fiqih untuk Tingkat Madrasah Aliyah & SMA',
+    deskripsi: 'Buku saku digital yang memuat kaidah-kaidah dasar ushul fiqih, dalil muthafaq, mukhtalaf, dan contoh kasus kontemporer.',
     gambar_url: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=800&q=80',
     link_eksternal: 'https://play.google.com/books',
-    kategori: 'Buku Digital',
+    kategori: 'E-Book',
     urutan: 2,
   },
   {
     id: 'k-3',
-    judul: 'Modul Ajar Kurikulum Merdeka PAI Fase E & Fase F Terintegrasi Profil Pelajar Pancasila',
-    deskripsi: 'Paket modul ajar 1 tahun ajaran lengkap dengan ATP, LKPD, rubrik asesmen autentik, dan media ajar interaktif berbasis Canva & Quizizz.',
+    judul: 'Modul Pembelajaran Interaktif Kurikulum Merdeka Fase E & F',
+    deskripsi: 'Kumpulan lembar kerja, asesmen formatif-sumatif, dan rubrik penilaian berbasis profil pelajar Pancasila Rahmatan lil \'Alamin.',
     gambar_url: 'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?auto=format&fit=crop&w=800&q=80',
     link_eksternal: 'https://guru.kemdikbud.go.id',
     kategori: 'Modul Ajar',
@@ -263,9 +251,9 @@ export const initialKarya: Karya[] = [
   },
   {
     id: 'k-4',
-    judul: 'Seri Video Animasi Edukasi Fiqih Remaja: Menghadapi Baligh & Pubertas',
-    deskripsi: 'Video motion graphic interaktif edukatif yang membahas hukum syariat seputar tanda-tanda baligh, mandi wajib, dan adab pergaulan.',
-    gambar_url: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=800&q=80',
+    judul: 'Seri Video Animasi 2D: Kisah Teladan Khulafaur Rasyidin',
+    deskripsi: 'Video edukasi bertema sejarah peradaban Islam yang dirancang untuk meningkatkan antusiasme siswa di kelas.',
+    gambar_url: 'https://images.unsplash.com/photo-1579546929518-9e396f3cc809?auto=format&fit=crop&w=800&q=80',
     link_eksternal: 'https://youtube.com',
     kategori: 'Video Animasi',
     urutan: 4,

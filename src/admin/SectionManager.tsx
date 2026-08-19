@@ -30,6 +30,7 @@ import {
   Palette,
   Phone,
   User,
+  ShieldCheck,
 } from 'lucide-react';
 import { YoutubeIcon } from '../components/ui/Icons';
 import { useSections } from '../hooks/useSections';
@@ -44,6 +45,8 @@ function getSectionIcon(key: string) {
   switch (key) {
     case 'hero':
       return <User className="w-5 h-5 text-indigo-500" />;
+    case 'sertifikasi':
+      return <ShieldCheck className="w-5 h-5 text-blue-500" />;
     case 'materi':
       return <BookOpen className="w-5 h-5 text-brand-500" />;
     case 'youtube':
